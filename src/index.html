@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/ical.js@1.4.0/build/ical.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+      async function fetchICalEvents(url) {
+        const res = await fetch(url);
+        const text = await res.text();
+        const jcalData = ICAL.parse(text);
+        const comp = new ICAL.Component(jcalData);
+        const vevents = comp.getAllSubcomponents('vevent');
+        return vevents.map(event => {
+          const e = new ICAL.Event(event);
+          return {
+            title: e.summary,
+            start: e.startDate.toString(),
+            end: e.endDate ? e.endDate.toString() : undefined
+          };
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', async function() {
+        const calendarEl = document.getElementById('calendar');
+        const events = await fetchICalEvents("http://localhost:3001/calendar.ics");
+        const holidays = await fetchICalEvents("http://localhost:3001/holiday.ics");
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+              left: '',
+              center: 'title',
+              right: ''
+          },
+          weekNumbers: true,
+          weekText: 'V ',
+          firstDay: 1,
+          locale: "sv-se",
+          eventSources: [
+            {
+              events: events,
+              color: '#D1593B', 
+            },
+            {
+              events: holidays,
+              color: '#F2A900', 
+            }
+          ],
+          eventDisplay: 'block',
+          eventTimeFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: false
+          },
+          dayMaxEventRows: true, // for all non-TimeGrid views
+          views: {
+              timeGrid: {
+              dayMaxEventRows: 6 // adjust to 6 only for timeGridWeek/timeGridDay
+              }
+          },
+          // height: 480,
+        });
+        // add some dummy events
+        calendar.addEvent({
+          title: 'Dummy Event with a long title that should wrap',
+          start: '2025-07-13T10:00:00',
+          end: '2025-07-13T12:00:00'
+        });
+        calendar.addEvent({
+          title: 'Dummy Event with a long title that should wrap',
+          start: '2025-07-13T10:00:00',
+          end: '2025-07-13T12:00:00'
+        });
+        calendar.addEvent({
+          title: 'Dummy Event with a long title that should wrap',
+          start: '2025-07-13T10:00:00',
+          end: '2025-07-13T12:00:00'
+        });calendar.addEvent({
+          title: 'Dummy Event with a long title that should wrap',
+          start: '2025-07-13T10:00:00',
+          end: '2025-07-13T12:00:00'
+        });calendar.addEvent({
+          title: 'Dummy Event with a long title that should wrap',
+          start: '2025-07-13T10:00:00',
+          end: '2025-07-13T12:00:00'
+        });calendar.addEvent({
+          title: 'Dummy Event with a long title that should wrap',
+          start: '2025-07-13T10:00:00',
+          end: '2025-07-13T12:00:00'
+        });
+        calendar.render();
+        
+        //capitalize the first letter of each word in the title
+        document.getElementById("fc-dom-1").innerHTML = document.getElementById("fc-dom-1").innerHTML.replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <img src="IMG_20241221_232152_01.jpg" alt="" class="bg">
+      <div id='calendar'></div>
+    </div>
+  </body>
+</html>
