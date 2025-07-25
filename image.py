@@ -10,7 +10,7 @@ from inky.auto import auto
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--saturation", "-s", type=float, default=0.5, help="Colour palette saturation")
+parser.add_argument("--saturation", "-s", type=float, default=0.9, help="Colour palette saturation")
 parser.add_argument("--file", "-f", type=pathlib.Path, help="Image file")
 
 inky = auto(ask_user=True, verbose=True)
