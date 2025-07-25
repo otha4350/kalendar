@@ -81,12 +81,12 @@ async fn calendar_page(State(store): State<CalendarStore>) -> Html<String> {
 async fn main() {
     //start geckodriver in a separate terminal
     // e.g. `geckodriver --port 4444`
-    Command::new("geckodriver")
+    Command::new("../geckodriver/geckodriver")
         .spawn()
         .expect("geckodriver failed to start");
     // Wait a bit for geckodriver to start
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-    
+
     // Initialize the calendar store
     let calendar_store = CalendarStore::new("calendars.csv");
     
@@ -137,6 +137,12 @@ async fn main() {
         take_screenshot().await.unwrap_or_else(|e| {
             eprintln!("Screenshot error: {}", e);
         });
+        Command::new("python")
+            .arg("display.py")
+            .arg("-f")
+            .arg("screenshot.png")
+            .spawn()
+            .expect("pimoroni failed to start");
     });
     
     server.await.unwrap();
