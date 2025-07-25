@@ -26,8 +26,6 @@
 
       document.addEventListener('DOMContentLoaded', async function() {
         const calendarEl = document.getElementById('calendar');
-        const events = await fetchICalEvents("http://localhost:3001/calendar.ics");
-        const holidays = await fetchICalEvents("http://localhost:3001/holiday.ics");
         const calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
           headerToolbar: {
@@ -39,16 +37,7 @@
           weekText: 'V ',
           firstDay: 1,
           locale: "sv-se",
-          eventSources: [
-            {
-              events: events,
-              color: '#D1593B', 
-            },
-            {
-              events: holidays,
-              color: '#F2A900', 
-            }
-          ],
+          eventSources: [<!--event_sources-->],
           eventDisplay: 'block',
           eventTimeFormat: {
             hour: 'numeric',

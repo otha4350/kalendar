@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::sync::{Arc, RwLock};
-use tokio::sync::RwLock as TokioRwLock;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,8 +1,8 @@
 use axum::{
     extract::{Path, State},
     response::{Html, IntoResponse},
-    routing::{get, post},
-    Router, Form,
+    routing::{get},
+    Router,
     http::StatusCode,
 };
 use fantoccini::ClientBuilder;
@@ -10,6 +10,7 @@ use std::fs::File;
 use std::io::Write;
 use axum::routing::get_service;
 use tower_http::services::ServeDir;
+use std::process::Command;
 
 mod form;
 
@@ -70,80 +71,22 @@ async fn calendar_page(State(store): State<CalendarStore>) -> Html<String> {
         .collect::<Vec<_>>()
         .join(",");
     
-    Html(format!(
-        r#"
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Calendar</title>
-            <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-            <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.8/index.global.min.js'></script>
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 20px;
-                    background-color: #f5f5f5;
-                }}
-                .header {{
-                    background: white;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    margin-bottom: 20px;
-                }}
-                .btn {{
-                    padding: 10px 20px;
-                    background: #007bff;
-                    color: white;
-                    text-decoration: none;
-                    border-radius: 4px;
-                    display: inline-block;
-                }}
-                .btn:hover {{
-                    opacity: 0.8;
-                }}
-                #calendar {{
-                    background: white;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>My Calendar</h1>
-                <a href="/calendars" class="btn">Manage Calendars</a>
-            </div>
-            
-            <div id='calendar'></div>
-            
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {{
-                    var calendarEl = document.getElementById('calendar');
-                    var calendar = new FullCalendar.Calendar(calendarEl, {{
-                        initialView: 'dayGridMonth',
-                        eventSources: [{}],
-                        height: 'auto',
-                        headerToolbar: {{
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                        }}
-                    }});
-                    calendar.render();
-                }});
-            </script>
-        </body>
-        </html>
-        "#,
-        event_sources
-    ))
+
+    let index_str = include_str!("index.html");
+    let html_template = index_str.replace("<!--event_sources-->", &event_sources);
+    Html(html_template)
 }
 
 #[tokio::main]
 async fn main() {
+    //start geckodriver in a separate terminal
+    // e.g. `geckodriver --port 4444`
+    Command::new("geckodriver")
+        .spawn()
+        .expect("geckodriver failed to start");
+    // Wait a bit for geckodriver to start
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    
     // Initialize the calendar store
     let calendar_store = CalendarStore::new("calendars.csv");
     
