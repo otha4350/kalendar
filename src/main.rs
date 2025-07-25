@@ -5,12 +5,8 @@ use axum::{
     Router,
     http::StatusCode,
 };
-use fantoccini::ClientBuilder;
-use std::fs::File;
-use std::io::Write;
 use axum::routing::get_service;
 use tower_http::services::ServeDir;
-use std::process::Command;
 
 mod form;
 
@@ -79,13 +75,6 @@ async fn calendar_page(State(store): State<CalendarStore>) -> Html<String> {
 
 #[tokio::main]
 async fn main() {
-    //start geckodriver in a separate terminal
-    // e.g. `geckodriver --port 4444`
-    Command::new("../geckodriver/geckodriver")
-        .spawn()
-        .expect("geckodriver failed to start");
-    // Wait a bit for geckodriver to start
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     // Initialize the calendar store
     let calendar_store = CalendarStore::new("calendars.csv");
@@ -126,49 +115,7 @@ async fn main() {
     println!("Calendar view: http://localhost:3001");
     println!("Calendar management: http://localhost:3001/calendars");
     
-    // Start the server in a background task
     let server = axum::serve(listener, app);
     
-    // Spawn the screenshot task
-    tokio::spawn(async move {
-        // Wait a bit for the server to start
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-        
-        take_screenshot().await.unwrap_or_else(|e| {
-            eprintln!("Screenshot error: {}", e);
-        });
-        Command::new("python")
-            .arg("display.py")
-            .arg("-f")
-            .arg("screenshot.png")
-            .spawn()
-            .expect("pimoroni failed to start");
-    });
-    
     server.await.unwrap();
-}
-
-async fn take_screenshot() -> Result<(), fantoccini::error::CmdError> {
-    println!("Taking screenshot...");
-    
-    // Connect to geckodriver
-    let c = ClientBuilder::native()
-        .connect("http://localhost:4444")
-        .await
-        .expect("failed to connect to WebDriver");
-    
-    c.set_window_size(800+(800-784), 480+(480-386)).await?;
-    c.goto("http://localhost:3001").await?;
-    
-    // Wait for the page to load and calendars to render
-    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-    
-    let bytes = c.screenshot().await?;
-    
-    let mut file = File::create("screenshot.png")?;
-    file.write_all(&bytes)?;
-    
-    println!("Screenshot saved as screenshot.png");
-    
-    c.close().await
 }
