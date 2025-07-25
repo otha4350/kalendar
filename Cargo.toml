@@ -4,18 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-async-std = "1.13.1"
 axum = "0.8.4"
-chrono = "0.4.41"
 csv = "1.3.1"
 fantoccini = "0.22.0"
-font-kit = "0.14.3"
-futures = "0.3.31"
-hyper = "1.6.0"
-icalendar = "0.16.15"
-image = "0.25.6"
 reqwest = "0.12.22"
-rusttype = "0.9.3"
 serde = "1.0.219"
 tokio = {version = "1.46.1", features = ["full"]}
 tower-http = {version = "0.6.6", features = ["full"]}
