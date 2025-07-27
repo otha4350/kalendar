@@ -147,5 +147,6 @@ if __name__ == "__main__":
 
     cal.draw(d, es)
 
-
-    out.show()
+    inky = auto(ask_user=True, verbose=True)
+    inky.set_image(out)
+    inky.show()
