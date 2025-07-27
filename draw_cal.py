@@ -19,15 +19,17 @@ SATURATED_PALETTE = [
         [0, 0, 0],
         [161, 164, 165],
         [208, 190, 71],
+        [156, 72, 75],
+        [61, 59, 94],
         [58, 91, 70],
         [255, 255, 255]]
 
 BACKGROUND_COLOR = "#ffffff"
-WEEKDAY_COLOR = "#1dad23"
-WEEKNUM_COLOR = "#1e1dae"
-MONTH_COLOR = "#1c181c"
-LINES_COLOR = "#1c181c"
-TODAY_BOX_COLOR = "#1e1dae"
+WEEKDAY_COLOR = "rgb(58, 91, 70)"
+WEEKNUM_COLOR = "rgb(61, 59, 94)"
+MONTH_COLOR = "#000000"
+LINES_COLOR = "#000000"
+TODAY_BOX_COLOR = "rgb(61, 59, 94)"
 
 
 
@@ -141,5 +143,6 @@ def do_stuff():
 
 if __name__ == "__main__":
     out = do_stuff()
+    print(out.getcolors())
     out.show()
 
