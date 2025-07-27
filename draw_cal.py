@@ -148,5 +148,6 @@ if __name__ == "__main__":
     cal.draw(d, es)
 
     inky = auto(ask_user=True, verbose=True)
-    inky.set_image(out)
+    resizedimage = out.resize(inky.resolution)
+    inky.set_image(resizedimage)
     inky.show()
