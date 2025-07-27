@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageColor, features
 import calendar
 import datetime
 import locale
+import numpy
 
 from inky.auto import auto
 
@@ -14,17 +15,15 @@ CAL_X = 50
 CAL_Y = 70
 CAL_W = 700
 CAL_H = 400
-FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf", index=0, encoding="unic")
-print(features.check_feature("raqm"))
-PALETTE_COLORS = [
-    "#1c181c", # background
-    "#ffffff", # white
-    "#1dad23", # green
-    "#1e1dae", # blue
-    "#cd2425", # red
-    "#e7de23", # yellow
-    "#d87b24", # orange
-]
+FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf", index=0, encoding="unic", layout_engine="raqm")
+SATURATED_PALETTE = [
+        [0, 0, 0],
+        [161, 164, 165],
+        [208, 190, 71],
+        [156, 72, 75],
+        [61, 59, 94],
+        [58, 91, 70],
+        [255, 255, 255]]
 
 BACKGROUND_COLOR = "#ffffff"
 WEEKDAY_COLOR = "#1c181c"
@@ -119,10 +118,7 @@ class DrawCalendar:
 
 def setup_image():
     out = Image.new("P", (IMG_WIDTH, IMG_HEIGHT), "#ffffff")
-    color_tuples = [ImageColor.getrgb(c) for c in PALETTE_COLORS]
-    palette = []
-    for t in color_tuples:
-        palette.extend(t)
+    palette = numpy.array(SATURATED_PALETTE, dtype=numpy.uint8).flatten().tobytes()
     out.putpalette(palette)
     d = ImageDraw.Draw(out)
     d.rectangle([0, 0, IMG_WIDTH, IMG_HEIGHT], fill=BACKGROUND_COLOR)
