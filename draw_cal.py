@@ -6,7 +6,6 @@ import datetime
 import locale
 import numpy
 
-from inky.auto import auto
 
 # Constants for calendar layout
 IMG_WIDTH = 800
@@ -21,12 +20,11 @@ SATURATED_PALETTE = [
         [161, 164, 165],
         [208, 190, 71],
         [156, 72, 75],
-        [61, 59, 94],
         [58, 91, 70],
         [255, 255, 255]]
 
 BACKGROUND_COLOR = "#ffffff"
-WEEKDAY_COLOR = "#1c181c"
+WEEKDAY_COLOR = "#1dad23"
 WEEKNUM_COLOR = "#1e1dae"
 MONTH_COLOR = "#1c181c"
 LINES_COLOR = "#1c181c"
@@ -124,9 +122,7 @@ def setup_image():
     d.rectangle([0, 0, IMG_WIDTH, IMG_HEIGHT], fill=BACKGROUND_COLOR)
     return out, d
 
-
-
-if __name__ == "__main__":
+def do_stuff():
     locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
     out, d = setup_image()
     cal = DrawCalendar(CAL_X, CAL_Y, CAL_W, CAL_H)
@@ -142,8 +138,9 @@ if __name__ == "__main__":
             events.extend(es)
 
     cal.draw(d, es)
+    return out
 
-    inky = auto(ask_user=True, verbose=True)
-    resizedimage = out.resize(inky.resolution)
-    inky.set_image(resizedimage)
-    inky.show()
+if __name__ == "__main__":
+    out = do_stuff()
+    out.show()
+
