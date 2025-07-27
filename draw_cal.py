@@ -18,8 +18,6 @@ FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf",
 SATURATED_PALETTE = [
         [0, 0, 0],
         [161, 164, 165],
-        [208, 190, 71],
-        [156, 72, 75],
         [61, 59, 94],
         [58, 91, 70],
         [255, 255, 255]]
