@@ -16,18 +16,20 @@ CAL_W = 700
 CAL_H = 400
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf", index=0, encoding="unic", layout_engine="raqm")
 SATURATED_PALETTE = [
-        [0, 0, 0],
-        [161, 164, 165],
-        [61, 59, 94],
-        [58, 91, 70],
-        [255, 255, 255]]
+        "BLACK",
+        "WHITE",
+        "YELLOW",
+        "RED",
+        "BLUE",
+        "GREEN",
+]
 
-BACKGROUND_COLOR = "#ffffff"
-WEEKDAY_COLOR = "rgb(58, 91, 70)"
-WEEKNUM_COLOR = "rgb(61, 59, 94)"
-MONTH_COLOR = "#000000"
-LINES_COLOR = "#000000"
-TODAY_BOX_COLOR = "rgb(61, 59, 94)"
+BACKGROUND_COLOR = "white"
+WEEKDAY_COLOR = "green"
+WEEKNUM_COLOR = "blue"
+MONTH_COLOR = "black"
+LINES_COLOR = "black"
+TODAY_BOX_COLOR = "yellow"
 
 
 
