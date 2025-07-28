@@ -7,6 +7,7 @@ import locale
 import numpy
 
 
+
 # Constants for calendar layout
 IMG_WIDTH = 800
 IMG_HEIGHT = 480
@@ -14,7 +15,7 @@ CAL_X = 50
 CAL_Y = 70
 CAL_W = 700
 CAL_H = 400
-FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf", index=0, encoding="unic", layout_engine="raqm")
+FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
 
 background_color = "WHITE"
 weekday_color = "GREEN"
@@ -55,13 +56,12 @@ class DrawCalendarDay:
         todays_events = [e for e in events if e[0].start.date() == self.date]
         for idx, (event, color) in enumerate(todays_events):
 
-
-            event_text = f"⬤{event.start.strftime('%H')} {event.summary}" if not event.all_day else event.summary
+            #●
+            event_text = f"{event.start.strftime('%H')} {event.summary}" if not event.all_day else event.summary
             if d.textlength(event_text + "...", font=FONT) > self.w - 10:
                 while d.textlength(event_text + "...", font=FONT) > self.w - 10:
                     event_text = event_text[:-1]
                 event_text += "..."
-
             d.text((x1 + 5, y1 + (20 * (idx+1))), event_text, fill=color, font=FONT)
 
         
@@ -128,7 +128,7 @@ def do_stuff():
             es = [(e, row[2]) for e in es]
             events.extend(es)
 
-    cal.draw(d, es)
+    cal.draw(d, events)
     return out
 
 if __name__ == "__main__":
