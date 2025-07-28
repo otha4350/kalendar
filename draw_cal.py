@@ -11,10 +11,10 @@ import holidays
 # Constants for calendar layout
 IMG_WIDTH = 800
 IMG_HEIGHT = 480
-CAL_X = 50
-CAL_Y = 70
-CAL_W = 700
-CAL_H = 400
+CAL_X = 10
+CAL_Y = 65
+CAL_W = 800 - CAL_X * 2
+CAL_H = 405
 MAX_EVENTS = 5
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
 SYMBOL_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
