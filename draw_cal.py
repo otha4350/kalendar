@@ -15,7 +15,9 @@ CAL_X = 50
 CAL_Y = 70
 CAL_W = 700
 CAL_H = 400
+MAX_EVENTS = 5
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
+SYMBOL_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
 
 c_black = "black"
 c_white = "white"
@@ -40,29 +42,46 @@ class DrawCalendarDay:
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.w, self.y + self.h
         d.rectangle([x1, y1, x2, y2], outline=lines_color, width=1)
-        
-        # Draw date
-        d.text((x1 + 5, y1 + 5), self.date.strftime("%a %d").capitalize(), font=FONT, fill=weekday_color)
-
         if self.date == datetime.date.today():
             d.rectangle([x1+1, y1+1, x2-1, y2-1], outline=today_box_color, width=2)
+
+        
+        # Draw date
+        date_str = self.date.strftime("%a %d").capitalize()
+        is_red_day = self.date.isoweekday() == 7
+        d.text((x1 + 5, y1 + 3),date_str, font=FONT, fill=weekday_color if not is_red_day else red_day_color)
+
 
         # Draw week number if it's Monday
         if self.date.isoweekday() == 1:
             week_str = "v. " + str(self.date.isocalendar().week)
-            d.text((x2 - 5, y1 + 5), week_str, font=FONT, fill=weeknum_color, anchor="rt")
+            d.text((x2 - 5, y1 + 3), week_str, font=FONT, fill=weeknum_color, anchor="rt")
 
         # Draw events
         todays_events = [e for e in events if e[0].start.date() == self.date]
+        todays_events.sort(key=lambda x: x[0].start)
+
+        events_today = len(todays_events)
+        if events_today > MAX_EVENTS:
+            todays_events = todays_events[:MAX_EVENTS-1]
         for idx, (event, color) in enumerate(todays_events):
 
-            #●
+            bp = "★" if color == "5" else "❤"
+            d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill=int(color))
+            bp_w = d.textlength(bp, font=SYMBOL_FONT)
+
+
             event_text = f"{event.start.strftime('%H')} {event.summary}" if not event.all_day else event.summary
-            if d.textlength(event_text + "...", font=FONT) > self.w - 10:
-                while d.textlength(event_text + "...", font=FONT) > self.w - 10:
+            unacceptable_textlen = lambda text: d.textlength(text + "...", font=FONT) > self.w - (bp_w)
+            if unacceptable_textlen(event_text):
+                while unacceptable_textlen(event_text):
                     event_text = event_text[:-1]
                 event_text += "..."
-            d.text((x1 + 5, y1 + (20 * (idx+1))), event_text, fill=int(color), font=FONT)
+            d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill=int(color), font=FONT)
+        
+        if  events_today > MAX_EVENTS:
+            d.text((x1 + 2, y2 - 15), f"+{events_today - MAX_EVENTS} till härligheter...", fill=lines_color, font=FONT, anchor="lt")
+        
 
         
 
@@ -114,13 +133,14 @@ def setup_image():
     return out, d
 
 def do_stuff():
-    global background_color, weekday_color, weeknum_color, month_color, lines_color, today_box_color
+    global background_color, weekday_color, weeknum_color, month_color, lines_color, today_box_color, red_day_color
     background_color = c_white
     weekday_color = c_black
     weeknum_color = c_black
     month_color = c_green
     lines_color = c_black
     today_box_color = c_red
+    red_day_color = c_red
 
     locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
     out, d = setup_image()
