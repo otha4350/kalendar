@@ -17,12 +17,12 @@ CAL_W = 700
 CAL_H = 400
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
 
-background_color = "WHITE"
-weekday_color = "GREEN"
-weeknum_color = "BLUE"
-month_color = "BLACK"
-lines_color = "BLACK"
-today_box_color = "RED"
+c_black = "black"
+c_white = "white"
+c_yellow = "yellow"
+c_red = "red"
+c_blue = "blue"
+c_green = "green"
 
 
 
@@ -114,6 +114,14 @@ def setup_image():
     return out, d
 
 def do_stuff():
+    global background_color, weekday_color, weeknum_color, month_color, lines_color, today_box_color
+    background_color = c_white
+    weekday_color = c_black
+    weeknum_color = c_black
+    month_color = c_green
+    lines_color = c_black
+    today_box_color = c_red
+
     locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
     out, d = setup_image()
     cal = DrawCalendar(CAL_X, CAL_Y, CAL_W, CAL_H)
