@@ -15,21 +15,13 @@ CAL_Y = 70
 CAL_W = 700
 CAL_H = 400
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf", index=0, encoding="unic", layout_engine="raqm")
-SATURATED_PALETTE = [
-        ImageColor.getrgb("BLACK"),
-        ImageColor.getrgb("WHITE"),
-        ImageColor.getrgb("YELLOW"),
-        ImageColor.getrgb("RED"),
-        ImageColor.getrgb("BLUE"),
-        ImageColor.getrgb("GREEN"),
-]
 
-BACKGROUND_COLOR = "white"
-WEEKDAY_COLOR = "green"
-WEEKNUM_COLOR = "blue"
-MONTH_COLOR = "black"
-LINES_COLOR = "black"
-TODAY_BOX_COLOR = "yellow"
+background_color = "WHITE"
+weekday_color = "GREEN"
+weeknum_color = "BLUE"
+month_color = "BLACK"
+lines_color = "BLACK"
+today_box_color = "RED"
 
 
 
@@ -46,18 +38,18 @@ class DrawCalendarDay:
     def draw(self, d: ImageDraw.ImageDraw, events: list[tuple[icalevents.Event, str]]):
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.w, self.y + self.h
-        d.rectangle([x1, y1, x2, y2], outline=LINES_COLOR, width=1)
+        d.rectangle([x1, y1, x2, y2], outline=lines_color, width=1)
         
         # Draw date
-        d.text((x1 + 5, y1 + 5), self.date.strftime("%a %d").capitalize(), font=FONT, fill=WEEKDAY_COLOR)
+        d.text((x1 + 5, y1 + 5), self.date.strftime("%a %d").capitalize(), font=FONT, fill=weekday_color)
 
         if self.date == datetime.date.today():
-            d.rectangle([x1+1, y1+1, x2-1, y2-1], outline=TODAY_BOX_COLOR, width=2)
+            d.rectangle([x1+1, y1+1, x2-1, y2-1], outline=today_box_color, width=2)
 
         # Draw week number if it's Monday
         if self.date.isoweekday() == 1:
             week_str = "v. " + str(self.date.isocalendar().week)
-            d.text((x2 - 5, y1 + 5), week_str, font=FONT, fill=WEEKNUM_COLOR, anchor="rt")
+            d.text((x2 - 5, y1 + 5), week_str, font=FONT, fill=weeknum_color, anchor="rt")
 
         # Draw events
         todays_events = [e for e in events if e[0].start.date() == self.date]
@@ -112,15 +104,13 @@ class DrawCalendar:
 
         month_name = datetime.date.today().strftime("%B %Y").capitalize()
         month_font = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", 60)
-        d.text((400, 5), month_name, font=month_font, fill=MONTH_COLOR, anchor="mt")
+        d.text((400, 5), month_name, font=month_font, fill=month_color, anchor="mt")
 
 
 def setup_image():
-    out = Image.new("P", (IMG_WIDTH, IMG_HEIGHT), "#ffffff")
-    palette = numpy.array(SATURATED_PALETTE, dtype=numpy.uint8).flatten().tobytes()
-    out.putpalette(palette)
+    out = Image.new("P", (IMG_WIDTH, IMG_HEIGHT), background_color)
     d = ImageDraw.Draw(out)
-    d.rectangle([0, 0, IMG_WIDTH, IMG_HEIGHT], fill=BACKGROUND_COLOR)
+    d.rectangle([0, 0, IMG_WIDTH, IMG_HEIGHT], fill=background_color)
     return out, d
 
 def do_stuff():
@@ -142,6 +132,8 @@ def do_stuff():
     return out
 
 if __name__ == "__main__":
+    global colors
+    
     out = do_stuff()
     print(out.getcolors())
     out.show()
