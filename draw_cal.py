@@ -62,7 +62,7 @@ class DrawCalendarDay:
                 while d.textlength(event_text + "...", font=FONT) > self.w - 10:
                     event_text = event_text[:-1]
                 event_text += "..."
-            d.text((x1 + 5, y1 + (20 * (idx+1))), event_text, fill=color, font=FONT)
+            d.text((x1 + 5, y1 + (20 * (idx+1))), event_text, fill=int(color), font=FONT)
 
         
 
