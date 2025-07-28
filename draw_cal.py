@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageColor, features
 import calendar
 import datetime
 import locale
-import numpy
+import holidays
 
 
 
@@ -42,13 +42,11 @@ class DrawCalendarDay:
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.w, self.y + self.h
         d.rectangle([x1, y1, x2, y2], outline=lines_color, width=1)
-        if self.date == datetime.date.today():
-            d.rectangle([x1+1, y1+1, x2-1, y2-1], outline=today_box_color, width=2)
 
         
         # Draw date
         date_str = self.date.strftime("%a %d").capitalize()
-        is_red_day = self.date.isoweekday() == 7
+        is_red_day = self.date.isoweekday() == 7 or self.date in holidays.Sweden()
         d.text((x1 + 5, y1 + 3),date_str, font=FONT, fill=weekday_color if not is_red_day else red_day_color)
 
 
@@ -66,7 +64,7 @@ class DrawCalendarDay:
             todays_events = todays_events[:MAX_EVENTS-1]
         for idx, (event, color) in enumerate(todays_events):
 
-            bp = "★" if color == "5" else "❤"
+            bp = "★" if color == "5" else "❤" if color == "3" else "*"
             d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill=int(color))
             bp_w = d.textlength(bp, font=SYMBOL_FONT)
 
@@ -96,12 +94,13 @@ class DrawCalendar:
         self.locale_cal = calendar.LocaleTextCalendar(calendar.MONDAY, "sv-se")
 
         monthdates = self.locale_cal.monthdatescalendar(datetime.date.today().year, datetime.date.today().month)
+
         self.week_num = len(monthdates)
         self.day_width = w / 7
         self.week_height = h / self.week_num
 
 
-        self.days_grid = []
+        self.days_grid : list[list[DrawCalendarDay]]= []
         for week_index, week in enumerate(monthdates):
             week_row = []
             for day_index,date in enumerate(week):
@@ -120,6 +119,10 @@ class DrawCalendar:
         for week in self.days_grid:
             for day in week:
                 day.draw(d, events)
+        for week_row in self.days_grid:
+            for day in week_row:
+                if day.date == datetime.date.today():
+                    d.rectangle([day.x, day.y, day.x+day.w, day.y+day.h], outline=today_box_color, width=2)
 
         month_name = datetime.date.today().strftime("%B %Y").capitalize()
         month_font = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", 60)
@@ -136,7 +139,7 @@ def do_stuff():
     global background_color, weekday_color, weeknum_color, month_color, lines_color, today_box_color, red_day_color
     background_color = c_white
     weekday_color = c_black
-    weeknum_color = c_black
+    weeknum_color = c_red
     month_color = c_green
     lines_color = c_black
     today_box_color = c_red
@@ -152,7 +155,7 @@ def do_stuff():
         reader.__next__()
         for row in reader:
             
-            es = icalevents.events(row[3], start=datetime.date.today() - datetime.timedelta(days=60), end=datetime.date.today() + datetime.timedelta(days=60))
+            es = icalevents.events(row[3], start=datetime.date.today() - datetime.timedelta(weeks=52), end=datetime.date.today() + datetime.timedelta(weeks=52))
             es = [(e, row[2]) for e in es]
             events.extend(es)
 
