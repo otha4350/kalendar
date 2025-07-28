@@ -16,12 +16,12 @@ CAL_W = 700
 CAL_H = 400
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Regular.ttf", index=0, encoding="unic", layout_engine="raqm")
 SATURATED_PALETTE = [
-        "BLACK",
-        "WHITE",
-        "YELLOW",
-        "RED",
-        "BLUE",
-        "GREEN",
+        ImageColor.getrgb("BLACK"),
+        ImageColor.getrgb("WHITE"),
+        ImageColor.getrgb("YELLOW"),
+        ImageColor.getrgb("RED"),
+        ImageColor.getrgb("BLUE"),
+        ImageColor.getrgb("GREEN"),
 ]
 
 BACKGROUND_COLOR = "white"
