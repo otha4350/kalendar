@@ -78,8 +78,7 @@ class DrawCalendarDay:
         for idx, (event, color) in enumerate(todays_events):
 
             # draw bullet point
-            bp = "★" if color == "5" else "❤" if color == "3" else "*"
-            d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill=int(color))
+            bp = "★" if color == "#00FF00" else "❤" if color == "#FF0000" else "*"
             bp_w = d.textlength(bp, font=SYMBOL_FONT)
 
             event_text = ""
@@ -100,16 +99,17 @@ class DrawCalendarDay:
                     while unacceptable_textlen(event_text):
                         event_text = event_text[:-1]
                     event_text += "..."
-            d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill=int(color), font=FONT)
+            
+            length = d.textlength(event_text, font=FONT)
+            bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +1)
+            d.rounded_rectangle(bbox,radius=3, fill=color)
+            d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill="#FFFFFF")
+            d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#FFFFFF", font=FONT)
+
         
         if  events_today > MAX_EVENTS:
             d.text((x1 + 2, y2 - 15), f"+{events_today - MAX_EVENTS} till härligheter...", fill=lines_color, font=FONT, anchor="lt")
         
-
-        
-
-
-
 class DrawCalendar:
     def __init__(self, x, y, w, h):
         self.x = x
@@ -141,6 +141,9 @@ class DrawCalendar:
             self.days_grid.append(week_row)
 
     def draw(self, d: ImageDraw.ImageDraw, events):
+        # Draw background
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,200)")
+
         for week in self.days_grid:
             for day in week:
                 day.draw(d, events)
@@ -155,9 +158,13 @@ class DrawCalendar:
 
 
 def setup_image():
-    out = Image.new("RGB", (IMG_WIDTH, IMG_HEIGHT), background_color)
-    d = ImageDraw.Draw(out)
-    d.rectangle([0, 0, IMG_WIDTH, IMG_HEIGHT], fill=background_color)
+    ImageDraw.ImageDraw.fontmode = "L"
+    image = Image.open("205988fgsdl.jpg").convert("RGB")
+    resizedimage = image.resize((IMG_WIDTH, IMG_HEIGHT))
+
+    out = Image.new("RGB", (IMG_WIDTH, IMG_HEIGHT), (0, 0, 0, 0))
+    out.paste(resizedimage, (0, 0))
+    d = ImageDraw.Draw(out, "RGBA")
     return out, d
 
 def  do_stuff():
@@ -193,61 +200,71 @@ if __name__ == "__main__":
     out = do_stuff()
     print(out.getcolors())
 
-    DESATURATED_PALETTE = [
-        [0, 0, 0],
-        [255, 255, 255],
-        [255, 255, 0],
-        [255, 0, 0],
-        [0, 0, 255],
-        [0, 255, 0],
-        [255, 255, 255]]
 
-    SATURATED_PALETTE = [
-        [0, 0, 0],
-        [161, 164, 165],
-        [208, 190, 71],
-        [156, 72, 75],
-        [61, 59, 94],
-        [58, 91, 70],
-        [255, 255, 255]]
-   
-    def _palette_blend(saturation, dtype="uint8"):
-        saturation = float(saturation)
-        palette = []
-        for i in range(6):
-            rs, gs, bs = [c * saturation for c in SATURATED_PALETTE[i]]
-            rd, gd, bd = [c * (1.0 - saturation) for c in DESATURATED_PALETTE[i]]
-            if dtype == "uint8":
-                palette += [int(rs + rd), int(gs + gd), int(bs + bd)]
-            if dtype == "uint24":
-                palette += [(int(rs + rd) << 16) | (int(gs + gd) << 8) | int(bs + bd)]
-        return palette
-    
-    dither = Image.Dither.FLOYDSTEINBERG
-
-    # Image size doesn't matter since it's just the palette we're using
     palette_image = Image.new("P", (1, 1))
+    #[(360588, 0), (10355, 1), (1488, 2), (9377, 3), (2192, 5)]
+    palette_image.putpalette([255, 255, 255, 0, 0, 0, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
 
-    if out.mode == "P":
-        print("P")
-        # Create a pure colour palette from DESATURATED_PALETTE
-        palette = numpy.array(DESATURATED_PALETTE, dtype=numpy.uint8).flatten().tobytes()
-        palette_image.putpalette(palette)
 
-        # Assume that palette mode images with an unset palette use the
-        # default colour order and "DESATURATED_PALETTE" pure colours
-        if not out.palette.colors:
-            out.putpalette(palette)
+    out = out.convert("RGB").quantize(6, palette=palette_image)
+    out.show()
+    # out.show()
 
-        # Assume that palette mode images with exactly six colours use
-        # all the correct colours, but not exactly in the right order.
-        if len(out.palette.colors) == 6:
-            dither = Image.Dither.NONE
-    else:
-        # All other image should be quantized and dithered
-        palette = _palette_blend(0)
-        palette_image.putpalette(palette)
+    # DESATURATED_PALETTE = [
+    #     [0, 0, 0],
+    #     [255, 255, 255],
+    #     [255, 255, 0],
+    #     [255, 0, 0],
+    #     [0, 0, 255],
+    #     [0, 255, 0],
+    #     [255, 255, 255]]
 
-    image = out.convert("RGB").quantize(6, palette=palette_image, dither=dither)
-    image.show()
+    # SATURATED_PALETTE = [
+    #     [0, 0, 0],
+    #     [161, 164, 165],
+    #     [208, 190, 71],
+    #     [156, 72, 75],
+    #     [61, 59, 94],
+    #     [58, 91, 70],
+    #     [255, 255, 255]]
+   
+    # def _palette_blend(saturation, dtype="uint8"):
+    #     saturation = float(saturation)
+    #     palette = []
+    #     for i in range(6):
+    #         rs, gs, bs = [c * saturation for c in SATURATED_PALETTE[i]]
+    #         rd, gd, bd = [c * (1.0 - saturation) for c in DESATURATED_PALETTE[i]]
+    #         if dtype == "uint8":
+    #             palette += [int(rs + rd), int(gs + gd), int(bs + bd)]
+    #         if dtype == "uint24":
+    #             palette += [(int(rs + rd) << 16) | (int(gs + gd) << 8) | int(bs + bd)]
+    #     return palette
+    
+    # dither = Image.Dither.FLOYDSTEINBERG
+
+    # # Image size doesn't matter since it's just the palette we're using
+    # palette_image = Image.new("P", (1, 1))
+
+    # if out.mode == "P":
+    #     print("P")
+    #     # Create a pure colour palette from DESATURATED_PALETTE
+    #     palette = numpy.array(DESATURATED_PALETTE, dtype=numpy.uint8).flatten().tobytes()
+    #     palette_image.putpalette(palette)
+
+    #     # Assume that palette mode images with an unset palette use the
+    #     # default colour order and "DESATURATED_PALETTE" pure colours
+    #     if not out.palette.colors:
+    #         out.putpalette(palette)
+
+    #     # Assume that palette mode images with exactly six colours use
+    #     # all the correct colours, but not exactly in the right order.
+    #     if len(out.palette.colors) == 6:
+    #         dither = Image.Dither.NONE
+    # else:
+    #     # All other image should be quantized and dithered
+    #     palette = _palette_blend(0)
+    #     palette_image.putpalette(palette)
+
+    # image = out.convert("RGB").quantize(6, palette=palette_image, dither=dither)
+    # image.show()
 
