@@ -142,7 +142,7 @@ class DrawCalendar:
 
     def draw(self, d: ImageDraw.ImageDraw, events):
         # Draw background
-        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,200)")
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,130)")
 
         for week in self.days_grid:
             for day in week:
