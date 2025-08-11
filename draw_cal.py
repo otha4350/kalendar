@@ -11,10 +11,10 @@ import numpy
 # Constants for calendar layout
 IMG_WIDTH = 800
 IMG_HEIGHT = 480
-CAL_X = 10
+CAL_X = 20
 CAL_Y = 65
 CAL_W = 800 - CAL_X * 2
-CAL_H = 405
+CAL_H = 395
 MAX_EVENTS = 5
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
 SYMBOL_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
@@ -99,7 +99,7 @@ class DrawCalendarDay:
                     event_text += "..."
             
             length = text_d.textlength(event_text, font=FONT)
-            bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +1)
+            bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +2)
             d.rounded_rectangle(bbox,radius=3, fill=color)
             text_d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill="#FFFFFF")
             text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#FFFFFF", font=FONT)
@@ -140,7 +140,7 @@ class DrawCalendar:
 
     def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
         # Draw background
-        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,130)")
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,170)")
 
         for week in self.days_grid:
             for day in week:
@@ -194,8 +194,10 @@ def draw_image():
     palette_image = Image.new("P", (1, 1))
     palette_image.putpalette([255, 255, 255, 0, 0, 0, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
 
-    out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0))
-    # out = out.quantize(6, palette=palette_image)
+    out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0)) #17 is #111111, the bg of text image
+    out = out.convert("RGB")
+    out.show()
+    out = out.quantize(6, palette=palette_image)
 
     return out
 
