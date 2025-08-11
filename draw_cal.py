@@ -196,7 +196,6 @@ def draw_image():
 
     out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0)) #17 is #111111, the bg of text image
     out = out.convert("RGB")
-    out.show()
     out = out.quantize(6, palette=palette_image)
 
     return out
