@@ -19,12 +19,12 @@ MAX_EVENTS = 5
 FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
 SYMBOL_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
 
-c_black = "black"
-c_white = "white"
-c_yellow = "yellow"
-c_red = "red"
-c_blue = "blue"
-c_green = "rgb(0, 255, 0)"
+c_black = "#000000"
+c_white = "#FFFFFF"
+c_yellow = "#FFFF00"
+c_red = "#FF0000"
+c_blue = "#0000FF"
+c_green = "#00FF00"
 
 class DrawCalendarDay:
     def __init__(self, row, col, x, y, w, h, date: datetime.date):
@@ -192,7 +192,7 @@ def draw_image():
     cal.draw(d,text_d, events)
 
     palette_image = Image.new("P", (1, 1))
-    palette_image.putpalette([255, 255, 255, 0, 0, 0, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
+    palette_image.putpalette([ 0, 0, 0, 255, 255, 255, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
 
     out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0)) #17 is #111111, the bg of text image
     out = out.convert("RGB")
