@@ -26,8 +26,6 @@ c_red = "red"
 c_blue = "blue"
 c_green = "rgb(0, 255, 0)"
 
-
-
 class DrawCalendarDay:
     def __init__(self, row, col, x, y, w, h, date: datetime.date):
         self.row = row
@@ -38,7 +36,7 @@ class DrawCalendarDay:
         self.h = h
         self.date = date 
 
-    def draw(self, d: ImageDraw.ImageDraw, events: list[tuple[icalevents.Event, str]]):
+    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events: list[tuple[icalevents.Event, str]]):
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.w, self.y + self.h
         d.rectangle([x1, y1, x2, y2], outline=lines_color, width=1)
@@ -47,13 +45,13 @@ class DrawCalendarDay:
         # Draw date
         date_str = self.date.strftime("%a %d").capitalize()
         is_red_day = self.date.isoweekday() == 7 or self.date in holidays.Sweden()
-        d.text((x1 + 5, y1 + 3),date_str, font=FONT, fill=weekday_color if not is_red_day else red_day_color)
+        text_d.text((x1 + 5, y1 + 3),date_str, font=FONT, fill=weekday_color if not is_red_day else red_day_color)
 
 
         # Draw week number if it's Monday
         if self.date.isoweekday() == 1:
             week_str = "v. " + str(self.date.isocalendar().week)
-            d.text((x2 - 5, y1 + 3), week_str, font=FONT, fill=weeknum_color, anchor="rt")
+            text_d.text((x2 - 5, y1 + 3), week_str, font=FONT, fill=weeknum_color, anchor="rt")
 
         # Draw events
         todays_events = []
@@ -79,13 +77,13 @@ class DrawCalendarDay:
 
             # draw bullet point
             bp = "★" if color == "#00FF00" else "❤" if color == "#FF0000" else "*"
-            bp_w = d.textlength(bp, font=SYMBOL_FONT)
+            bp_w = text_d.textlength(bp, font=SYMBOL_FONT)
 
             event_text = ""
             if event in multiday_event_days.keys():
                 event_text = event.summary
                 days_string = multiday_event_days[event]
-                unacceptable_textlen = lambda text: d.textlength(text + "..." + days_string, font=FONT) > self.w - (bp_w)
+                unacceptable_textlen = lambda text: text_d.textlength(text + "..." + days_string, font=FONT) > self.w - (bp_w)
                 if unacceptable_textlen(event_text):
                     while unacceptable_textlen(event_text):
                         event_text = event_text[:-1]
@@ -93,22 +91,22 @@ class DrawCalendarDay:
                 else:
                     event_text += " " + days_string
             else:
-                event_text = f"{event.start.strftime('%H')} {event.summary}" if not event.all_day else event.summary
-                unacceptable_textlen = lambda text: d.textlength(text + "...", font=FONT) > self.w - (bp_w)
+                event_text = f"{event.start.astimezone().strftime('%H')} {event.summary}" if not event.all_day else event.summary
+                unacceptable_textlen = lambda text: text_d.textlength(text + "...", font=FONT) > self.w - (bp_w)
                 if unacceptable_textlen(event_text):
                     while unacceptable_textlen(event_text):
                         event_text = event_text[:-1]
                     event_text += "..."
             
-            length = d.textlength(event_text, font=FONT)
+            length = text_d.textlength(event_text, font=FONT)
             bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +1)
             d.rounded_rectangle(bbox,radius=3, fill=color)
-            d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill="#FFFFFF")
-            d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#FFFFFF", font=FONT)
+            text_d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill="#FFFFFF")
+            text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#FFFFFF", font=FONT)
 
         
         if  events_today > MAX_EVENTS:
-            d.text((x1 + 2, y2 - 15), f"+{events_today - MAX_EVENTS} till härligheter...", fill=lines_color, font=FONT, anchor="lt")
+            text_d.text((x1 + 2, y2 - 15), f"+{events_today - MAX_EVENTS} till härligheter...", fill=lines_color, font=FONT, anchor="lt")
         
 class DrawCalendar:
     def __init__(self, x, y, w, h):
@@ -140,13 +138,13 @@ class DrawCalendar:
                 ))
             self.days_grid.append(week_row)
 
-    def draw(self, d: ImageDraw.ImageDraw, events):
+    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
         # Draw background
         d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,130)")
 
         for week in self.days_grid:
             for day in week:
-                day.draw(d, events)
+                day.draw(d,text_d, events)
         for week_row in self.days_grid:
             for day in week_row:
                 if day.date == datetime.date.today():
@@ -154,20 +152,21 @@ class DrawCalendar:
 
         month_name = datetime.date.today().strftime("%B %Y").capitalize()
         month_font = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", 60)
-        d.text((400, 5), month_name, font=month_font, fill=month_color, anchor="mt")
+        text_d.text((400, 5), month_name, font=month_font, fill=month_color, anchor="mt")
 
 
 def setup_image():
-    ImageDraw.ImageDraw.fontmode = "L"
-    image = Image.open("205988fgsdl.jpg").convert("RGB")
-    resizedimage = image.resize((IMG_WIDTH, IMG_HEIGHT))
+    ImageDraw.ImageDraw.fontmode = "1"
+    out = Image.open("205988fgsdl.jpg").convert("RGB")
+    out = out.resize((IMG_WIDTH, IMG_HEIGHT))
 
-    out = Image.new("RGB", (IMG_WIDTH, IMG_HEIGHT), (0, 0, 0, 0))
-    out.paste(resizedimage, (0, 0))
+    text_image = Image.new("P", (IMG_WIDTH, IMG_HEIGHT), color="#111111")
+    text_d = ImageDraw.Draw(text_image)
+
     d = ImageDraw.Draw(out, "RGBA")
-    return out, d
+    return out, d, text_image, text_d
 
-def  do_stuff():
+def draw_image():
     global background_color, weekday_color, weeknum_color, month_color, lines_color, today_box_color, red_day_color
     background_color = c_white
     weekday_color = c_black
@@ -178,7 +177,6 @@ def  do_stuff():
     red_day_color = c_red
 
     locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
-    out, d = setup_image()
     cal = DrawCalendar(CAL_X, CAL_Y, CAL_W, CAL_H)
 
     events: list[tuple[icalevents.Event, str]] = []
@@ -186,85 +184,24 @@ def  do_stuff():
         reader = csv.reader(csvfile)
         reader.__next__()
         for row in reader:
-            
             es = icalevents.events(row[3], start=datetime.date.today() - datetime.timedelta(weeks=52), end=datetime.date.today() + datetime.timedelta(weeks=52))
             es = [(e, row[2]) for e in es]
             events.extend(es)
 
-    cal.draw(d, events)
+    out, d, text_image, text_d = setup_image()
+    cal.draw(d,text_d, events)
+
+    palette_image = Image.new("P", (1, 1))
+    palette_image.putpalette([255, 255, 255, 0, 0, 0, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
+
+    out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0))
+    # out = out.quantize(6, palette=palette_image)
+
     return out
 
 if __name__ == "__main__":
     global colors
     
-    out = do_stuff()
+    out = draw_image()
     print(out.getcolors())
-
-
-    palette_image = Image.new("P", (1, 1))
-    #[(360588, 0), (10355, 1), (1488, 2), (9377, 3), (2192, 5)]
-    palette_image.putpalette([255, 255, 255, 0, 0, 0, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
-
-
-    out = out.convert("RGB").quantize(6, palette=palette_image)
     out.show()
-    # out.show()
-
-    # DESATURATED_PALETTE = [
-    #     [0, 0, 0],
-    #     [255, 255, 255],
-    #     [255, 255, 0],
-    #     [255, 0, 0],
-    #     [0, 0, 255],
-    #     [0, 255, 0],
-    #     [255, 255, 255]]
-
-    # SATURATED_PALETTE = [
-    #     [0, 0, 0],
-    #     [161, 164, 165],
-    #     [208, 190, 71],
-    #     [156, 72, 75],
-    #     [61, 59, 94],
-    #     [58, 91, 70],
-    #     [255, 255, 255]]
-   
-    # def _palette_blend(saturation, dtype="uint8"):
-    #     saturation = float(saturation)
-    #     palette = []
-    #     for i in range(6):
-    #         rs, gs, bs = [c * saturation for c in SATURATED_PALETTE[i]]
-    #         rd, gd, bd = [c * (1.0 - saturation) for c in DESATURATED_PALETTE[i]]
-    #         if dtype == "uint8":
-    #             palette += [int(rs + rd), int(gs + gd), int(bs + bd)]
-    #         if dtype == "uint24":
-    #             palette += [(int(rs + rd) << 16) | (int(gs + gd) << 8) | int(bs + bd)]
-    #     return palette
-    
-    # dither = Image.Dither.FLOYDSTEINBERG
-
-    # # Image size doesn't matter since it's just the palette we're using
-    # palette_image = Image.new("P", (1, 1))
-
-    # if out.mode == "P":
-    #     print("P")
-    #     # Create a pure colour palette from DESATURATED_PALETTE
-    #     palette = numpy.array(DESATURATED_PALETTE, dtype=numpy.uint8).flatten().tobytes()
-    #     palette_image.putpalette(palette)
-
-    #     # Assume that palette mode images with an unset palette use the
-    #     # default colour order and "DESATURATED_PALETTE" pure colours
-    #     if not out.palette.colors:
-    #         out.putpalette(palette)
-
-    #     # Assume that palette mode images with exactly six colours use
-    #     # all the correct colours, but not exactly in the right order.
-    #     if len(out.palette.colors) == 6:
-    #         dither = Image.Dither.NONE
-    # else:
-    #     # All other image should be quantized and dithered
-    #     palette = _palette_blend(0)
-    #     palette_image.putpalette(palette)
-
-    # image = out.convert("RGB").quantize(6, palette=palette_image, dither=dither)
-    # image.show()
-
