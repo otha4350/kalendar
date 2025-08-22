@@ -17,7 +17,7 @@ CAL_Y = 65
 CAL_W = 800 - CAL_X * 2
 CAL_H = 395
 MAX_EVENTS = 5
-FONT = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", index=0, encoding="unic", layout_engine="raqm")
+FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=11)
 SYMBOL_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
 
 c_black = "#000000"
@@ -99,20 +99,22 @@ class DrawCalendarDay:
             if event in multiday_event_days.keys():
                 event_text = event.summary
                 days_string = multiday_event_days[event]
-                unacceptable_textlen = lambda text: text_d.textlength(text + "..." + days_string, font=FONT) > self.w - (bp_w)
+                unacceptable_textlen = lambda text: text_d.textlength(text + "…" + days_string, font=FONT) > self.w - (bp_w)
+                # unacceptable_textlen = lambda text: False
                 if unacceptable_textlen(event_text):
                     while unacceptable_textlen(event_text):
                         event_text = event_text[:-1]
-                    event_text += "..." + days_string
+                    event_text += "…" + days_string
                 else:
                     event_text += " " + days_string
             else:
                 event_text = f"{event.start.astimezone().strftime('%H')} {event.summary}" if not event.all_day else event.summary
-                unacceptable_textlen = lambda text: text_d.textlength(text + "...", font=FONT) > self.w - (bp_w)
+                unacceptable_textlen = lambda text: text_d.textlength(text + "…", font=FONT) > self.w - (bp_w)
+                # unacceptable_textlen = lambda text: False
                 if unacceptable_textlen(event_text):
                     while unacceptable_textlen(event_text):
                         event_text = event_text[:-1]
-                    event_text += "..."
+                    event_text += "…"
             
             length = text_d.textlength(event_text, font=FONT)
             bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +2)
@@ -122,7 +124,7 @@ class DrawCalendarDay:
 
         
         if  events_today > MAX_EVENTS:
-            draw_text_with_bg(d, text_d, f"+{events_today - MAX_EVENTS} till härligheter...", x1 + 2, y2 - 15, FONT, fill=lines_color, bg_color="#FFFFFF", padding=0)
+            draw_text_with_bg(d, text_d, f"+{events_today - MAX_EVENTS} till härligheter…", x1 + 2, y2 - 15, FONT, fill=lines_color, bg_color="#FFFFFF", padding=0)
         
 class DrawCalendar:
     def __init__(self, x, y, w, h):
