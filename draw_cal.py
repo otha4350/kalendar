@@ -1,11 +1,12 @@
-from icalevents import icalevents, icalparser
+from icalevents import icalevents
 import csv
-from PIL import Image, ImageDraw, ImageFont, ImageColor, features
+from PIL import Image, ImageDraw, ImageFont
 import calendar
 import datetime
 import locale
 import holidays
-import numpy
+import random
+import os
 
 
 # Constants for calendar layout
@@ -26,6 +27,21 @@ c_red = "#FF0000"
 c_blue = "#0000FF"
 c_green = "#00FF00"
 
+def draw_text_with_bg(d, text_d, text, x, y, font, fill="#000000", bg_color="#FFFFFF", padding=1):
+    length_px = text_d.textlength(text, font=font)
+    bbox = (x, y, x + length_px + padding * 2, y + font.size + padding * 2)
+    d.rounded_rectangle(bbox, radius=3, fill=bg_color)
+    text_d.text((x + padding, y + padding), text, font=font, fill=fill)
+
+def draw_text_with_outline(d, text_d, text, x, y, font, fill="#000000", outline_color="#FFFFFF", outline_width=1, anchor="lt"):
+    # Draw outline
+    for dx in [-outline_width, 0, outline_width]:
+        for dy in [-outline_width, 0, outline_width]:
+            if dx != 0 or dy != 0:
+                text_d.text((x + dx, y + dy), text, font=font, fill=outline_color, anchor=anchor)
+    # Draw main text
+    text_d.text((x, y), text, font=font, fill=fill, anchor=anchor)
+
 class DrawCalendarDay:
     def __init__(self, row, col, x, y, w, h, date: datetime.date):
         self.row = row
@@ -45,13 +61,13 @@ class DrawCalendarDay:
         # Draw date
         date_str = self.date.strftime("%a %d").capitalize()
         is_red_day = self.date.isoweekday() == 7 or self.date in holidays.Sweden()
-        text_d.text((x1 + 5, y1 + 3),date_str, font=FONT, fill=weekday_color if not is_red_day else red_day_color)
+        draw_text_with_bg(d, text_d, date_str, x1 + 3, y1 + 3, FONT, fill=weekday_color if not is_red_day else red_day_color, bg_color="#FFFFFF", padding=1)
 
 
         # Draw week number if it's Monday
         if self.date.isoweekday() == 1:
             week_str = "v. " + str(self.date.isocalendar().week)
-            text_d.text((x2 - 5, y1 + 3), week_str, font=FONT, fill=weeknum_color, anchor="rt")
+            draw_text_with_bg(d, text_d, week_str, x2 - text_d.textlength(week_str) -5, y1 + 3, FONT, fill=weeknum_color, bg_color="#FFFFFF", padding=0)
 
         # Draw events
         todays_events = []
@@ -100,13 +116,13 @@ class DrawCalendarDay:
             
             length = text_d.textlength(event_text, font=FONT)
             bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +2)
-            d.rounded_rectangle(bbox,radius=3, fill=color)
-            text_d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill="#FFFFFF")
-            text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#FFFFFF", font=FONT)
+            d.rounded_rectangle(bbox,radius=3, fill="#FFFFFF")
+            text_d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill=color)
+            text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#000000", font=FONT)
 
         
         if  events_today > MAX_EVENTS:
-            text_d.text((x1 + 2, y2 - 15), f"+{events_today - MAX_EVENTS} till härligheter...", fill=lines_color, font=FONT, anchor="lt")
+            draw_text_with_bg(d, text_d, f"+{events_today - MAX_EVENTS} till härligheter...", x1 + 2, y2 - 15, FONT, fill=lines_color, bg_color="#FFFFFF", padding=0)
         
 class DrawCalendar:
     def __init__(self, x, y, w, h):
@@ -140,7 +156,7 @@ class DrawCalendar:
 
     def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
         # Draw background
-        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,170)")
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,100)")
 
         for week in self.days_grid:
             for day in week:
@@ -152,12 +168,18 @@ class DrawCalendar:
 
         month_name = datetime.date.today().strftime("%B %Y").capitalize()
         month_font = ImageFont.truetype("font/Libre_Baskerville/LibreBaskerville-Italic.ttf", 60)
-        text_d.text((400, 5), month_name, font=month_font, fill=month_color, anchor="mt")
+        # text_d.text((400, 5), month_name, font=month_font, fill=month_color, anchor="mt")
+        draw_text_with_outline(d, text_d, month_name, self.x + self.w / 2, 5, month_font, fill=month_color, outline_color=month_outline_color, outline_width=1, anchor="mt")
+
 
 
 def setup_image():
     ImageDraw.ImageDraw.fontmode = "1"
-    out = Image.open("205988fgsdl.jpg").convert("RGB")
+    # get a random image in the wallpapers folder
+    wallpapers = [f for f in os.listdir("wallpapers") if f.endswith((".jpg", ".png"))]
+    random_wallpaper = random.choice(wallpapers)
+    out = Image.open(os.path.join("wallpapers", random_wallpaper)).convert("RGB")
+
     out = out.resize((IMG_WIDTH, IMG_HEIGHT))
 
     text_image = Image.new("P", (IMG_WIDTH, IMG_HEIGHT), color="#111111")
@@ -167,11 +189,12 @@ def setup_image():
     return out, d, text_image, text_d
 
 def draw_image():
-    global background_color, weekday_color, weeknum_color, month_color, lines_color, today_box_color, red_day_color
+    global background_color, weekday_color, weeknum_color, month_color, month_outline_color, lines_color, today_box_color, red_day_color
     background_color = c_white
     weekday_color = c_black
     weeknum_color = c_red
-    month_color = c_green
+    month_color = c_white
+    month_outline_color = c_black
     lines_color = c_black
     today_box_color = c_red
     red_day_color = c_red
@@ -192,7 +215,12 @@ def draw_image():
     cal.draw(d,text_d, events)
 
     palette_image = Image.new("P", (1, 1))
-    palette_image.putpalette([ 0, 0, 0, 255, 255, 255, 255, 255, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0])
+    palette_image.putpalette([ 0, 0, 0, 
+                              255, 255, 255, 
+                              255, 255, 0, 
+                              255, 0, 0, 
+                              0, 0, 255, 
+                              0, 255, 0])
 
     out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0)) #17 is #111111, the bg of text image
     out = out.convert("RGB")
@@ -204,5 +232,12 @@ if __name__ == "__main__":
     global colors
     
     out = draw_image()
-    print(out.getcolors())
+    out.putpalette([
+        0x1c, 0x18, 0x1c, #black
+        0xff, 0xff, 0xff, #white
+        0xe7, 0xde, 0x23, #yellow
+        0xcd, 0x24, 0x25, #red
+        0x1e, 0x1d, 0xae, #blue
+        0x1d, 0xad, 0x23, #green
+        ])
     out.show()
