@@ -176,9 +176,10 @@ class DrawCalendar:
 def setup_image():
     ImageDraw.ImageDraw.fontmode = "1"
     # get a random image in the wallpapers folder
-    wallpapers = [f for f in os.listdir("wallpapers") if f.endswith((".jpg", ".png"))]
-    random_wallpaper = random.choice(wallpapers)
-    out = Image.open(os.path.join("wallpapers", random_wallpaper)).convert("RGB")
+    # wallpapers = [f for f in os.listdir("wallpapers") if f.endswith((".jpg", ".png"))]
+    # random_wallpaper = random.choice(wallpapers)
+    # out = Image.open(os.path.join("wallpapers", random_wallpaper)).convert("RGB")
+    out = Image.open("20240831_082054241_iOS.jpg").convert("RGB")
 
     out = out.resize((IMG_WIDTH, IMG_HEIGHT))
 
