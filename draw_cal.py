@@ -30,6 +30,21 @@ c_red = "#FF0000"
 c_blue = "#0000FF"
 c_green = "#00FF00"
 
+DESAT_PALETTE = [
+        0x1c, 0x18, 0x1c, #black
+        0xff, 0xff, 0xff, #white
+        0xe7, 0xde, 0x23, #yellow
+        0xcd, 0x24, 0x25, #red
+        0x1e, 0x1d, 0xae, #blue
+        0x1d, 0xad, 0x23, #green
+        ]
+SAT_PALETTE = [ 0, 0, 0, 
+                255, 255, 255, 
+                255, 255, 0, 
+                255, 0, 0, 
+                0, 0, 255, 
+                0, 255, 0]
+
 def draw_text_with_bg(d, text_d, text, x, y, font, fill=c_black, bg_color=c_white, padding=1, antialias=False):
     text_draw = d if antialias else text_d
 
@@ -322,16 +337,12 @@ def draw_image():
             
 
     palette_image = Image.new("P", (1, 1))
-    palette_image.putpalette([ 0, 0, 0, 
-                              255, 255, 255, 
-                              255, 255, 0, 
-                              255, 0, 0, 
-                              0, 0, 255, 
-                              0, 255, 0])
+    palette_image.putpalette(DESAT_PALETTE)
 
     out = Image.composite(out, text_image.convert("RGBA"), text_image.convert("L").point(lambda x: 255 if x == 17 else 0)) #17 is #111111, the bg of text image
     out = out.convert("RGB")
     out = out.quantize(6, palette=palette_image)
+    out.putpalette(SAT_PALETTE)
 
     return out
 
@@ -339,12 +350,5 @@ if __name__ == "__main__":
     global colors
     
     out = draw_image()
-    out.putpalette([
-        0x1c, 0x18, 0x1c, #black
-        0xff, 0xff, 0xff, #white
-        0xe7, 0xde, 0x23, #yellow
-        0xcd, 0x24, 0x25, #red
-        0x1e, 0x1d, 0xae, #blue
-        0x1d, 0xad, 0x23, #green
-        ])
+    out.putpalette(DESAT_PALETTE)
     out.show()
