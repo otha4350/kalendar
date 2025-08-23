@@ -7,7 +7,8 @@ import locale
 import holidays
 import random
 import os
-
+from hyphen import Hyphenator, textwrap2
+import json
 
 # Constants for calendar layout
 IMG_WIDTH = 800
@@ -17,7 +18,9 @@ CAL_Y = 65
 CAL_W = 800 - CAL_X * 2
 CAL_H = 395
 MAX_EVENTS = 5
-FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=11)
+BG_OPACITY = 0  # 0-255
+FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
+LARGE_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSansCondensed.ttf", index=0, encoding="unic", layout_engine="raqm", size=21)
 SYMBOL_FONT = ImageFont.truetype("font/dejavu-sans/ttf/DejaVuSans.ttf", index=0, encoding="unic", layout_engine="raqm", size=12)
 
 c_black = "#000000"
@@ -27,13 +30,15 @@ c_red = "#FF0000"
 c_blue = "#0000FF"
 c_green = "#00FF00"
 
-def draw_text_with_bg(d, text_d, text, x, y, font, fill="#000000", bg_color="#FFFFFF", padding=1):
-    length_px = text_d.textlength(text, font=font)
+def draw_text_with_bg(d, text_d, text, x, y, font, fill=c_black, bg_color=c_white, padding=1, antialias=False):
+    text_draw = d if antialias else text_d
+
+    length_px = text_draw.textlength(text, font=font)
     bbox = (x, y, x + length_px + padding * 2, y + font.size + padding * 2)
     d.rounded_rectangle(bbox, radius=3, fill=bg_color)
-    text_d.text((x + padding, y + padding), text, font=font, fill=fill)
+    text_draw.text((x + padding, y + padding), text, font=font, fill=fill)
 
-def draw_text_with_outline(d, text_d, text, x, y, font, fill="#000000", outline_color="#FFFFFF", outline_width=1, anchor="lt"):
+def draw_text_with_outline(d, text_d, text, x, y, font, fill=c_black, outline_color=c_white, outline_width=1, anchor="lt"):
     # Draw outline
     for dx in [-outline_width, 0, outline_width]:
         for dy in [-outline_width, 0, outline_width]:
@@ -42,10 +47,27 @@ def draw_text_with_outline(d, text_d, text, x, y, font, fill="#000000", outline_
     # Draw main text
     text_d.text((x, y), text, font=font, fill=fill, anchor=anchor)
 
+def get_todays_events(events, date: datetime.date):
+    todays_events = []
+    multiday_event_days = {}
+
+    # Grab multiday events
+    for event, color in events:
+        if event.start.date() <= date <= event.end.date() and not event.start.date() == event.end.date() and not event.all_day:
+            event_len = (event.end.date() - event.start.date()).days + 1
+            event_day = (date - event.start.date()).days + 1
+            event_day = f"({event_day}/{event_len})"
+            multiday_event_days[event] = event_day
+            todays_events.append((event, color))
+        
+    todays_oneday_events = [e for e in events if e[0].start.date() == date and not e[0] in multiday_event_days.keys()]
+    todays_oneday_events.sort(key=lambda x: x[0].start)
+    todays_events.extend(todays_oneday_events)
+
+    return todays_events, multiday_event_days
+
 class DrawCalendarDay:
-    def __init__(self, row, col, x, y, w, h, date: datetime.date):
-        self.row = row
-        self.col = col
+    def __init__(self, x, y, w, h, date: datetime.date):
         self.x = x
         self.y = y
         self.w = w
@@ -61,35 +83,25 @@ class DrawCalendarDay:
         # Draw date
         date_str = self.date.strftime("%a %d").capitalize()
         is_red_day = self.date.isoweekday() == 7 or self.date in holidays.Sweden()
-        draw_text_with_bg(d, text_d, date_str, x1 + 3, y1 + 3, FONT, fill=weekday_color if not is_red_day else red_day_color, bg_color="#FFFFFF", padding=1)
+        draw_text_with_bg(d, text_d, date_str, x1 + 3, y1 + 3, FONT, fill=weekday_color if not is_red_day else red_day_color, bg_color=c_white, padding=1)
 
 
         # Draw week number if it's Monday
         if self.date.isoweekday() == 1:
             week_str = "v. " + str(self.date.isocalendar().week)
-            draw_text_with_bg(d, text_d, week_str, x2 - text_d.textlength(week_str) -5, y1 + 3, FONT, fill=weeknum_color, bg_color="#FFFFFF", padding=0)
+            draw_text_with_bg(d, text_d, week_str, x2 - text_d.textlength(week_str, font=FONT)-5, y1 + 3, FONT, fill=weeknum_color, bg_color=c_white, padding=1)
 
         # Draw events
-        todays_events = []
-        multiday_event_days = {}
-
-        # Grab multiday events
-        for event, color in events:
-            if event.start.date() <= self.date <= event.end.date() and not event.start.date() == event.end.date() and not event.all_day:
-                event_len = (event.end.date() - event.start.date()).days + 1
-                event_day = (self.date - event.start.date()).days + 1
-                event_day = f"({event_day}/{event_len})"
-                multiday_event_days[event] = event_day
-                todays_events.append((event, color))
-            
-        todays_oneday_events = [e for e in events if e[0].start.date() == self.date and not e[0] in multiday_event_days.keys()]
-        todays_oneday_events.sort(key=lambda x: x[0].start)
-        todays_events.extend(todays_oneday_events)
+        
+        todays_events, multiday_event_days = get_todays_events(events, self.date)
 
         events_today = len(todays_events)
         if events_today > MAX_EVENTS:
             todays_events = todays_events[:MAX_EVENTS-1]
-        for idx, (event, color) in enumerate(todays_events):
+
+        line_idx = 0
+        for (event, color) in (todays_events):
+            line_idx += 1
 
             # draw bullet point
             bp = "★" if color == "#00FF00" else "❤" if color == "#FF0000" else "*"
@@ -117,14 +129,13 @@ class DrawCalendarDay:
                     event_text += "…"
             
             length = text_d.textlength(event_text, font=FONT)
-            bbox = (x1 + 2, y1 +3+ (12 * (idx+1)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (idx+2)) +2)
-            d.rounded_rectangle(bbox,radius=3, fill="#FFFFFF")
-            text_d.text((x1+2, y1 +3+ (12 * (idx+1)) - 2), bp, font=SYMBOL_FONT, fill=color)
-            text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (idx+1))), event_text, fill="#000000", font=FONT)
+            bbox = (x1 + 2, y1 +3+ (12 * (line_idx)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (line_idx+1)) +4)
+            d.rounded_rectangle(bbox,radius=3, fill=c_white)
+            text_d.text((x1+2, y1 +3+ (12 * (line_idx)) - 2), bp, font=SYMBOL_FONT, fill=color)
+            text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (line_idx))), event_text, fill=c_black, font=FONT)
 
-        
         if  events_today > MAX_EVENTS:
-            draw_text_with_bg(d, text_d, f"+{events_today - MAX_EVENTS} till härligheter…", x1 + 2, y2 - 15, FONT, fill=lines_color, bg_color="#FFFFFF", padding=0)
+            draw_text_with_bg(d, text_d, f"+{events_today - MAX_EVENTS} till härligheter…", x1 + 2, y2 - 10-2, FONT.font_variant(size=10), fill=lines_color, bg_color=c_white, padding=0)
         
 class DrawCalendar:
     def __init__(self, x, y, w, h):
@@ -146,8 +157,6 @@ class DrawCalendar:
             week_row = []
             for day_index,date in enumerate(week):
                 week_row.append(DrawCalendarDay(
-                    row=week_index,
-                    col=day_index,
                     x=x + day_index * self.day_width,
                     y=y + week_index * self.week_height,
                     w=self.day_width,
@@ -158,7 +167,7 @@ class DrawCalendar:
 
     def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
         # Draw background
-        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill="rgba(255,255,255,100)")
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill=f"rgba(255,255,255,{BG_OPACITY})")
 
         for week in self.days_grid:
             for day in week:
@@ -173,7 +182,84 @@ class DrawCalendar:
         # text_d.text((400, 5), month_name, font=month_font, fill=month_color, anchor="mt")
         draw_text_with_outline(d, text_d, month_name, self.x + self.w / 2, 5, month_font, fill=month_color, outline_color=month_outline_color, outline_width=1, anchor="mt")
 
+class DrawWeekDay:
+    def __init__(self, x, y, w, h, date: datetime.date):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.date = date
 
+    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], outline=lines_color, width=1)
+        ordinal = "a" if self.date.day <= 2 else "e"
+        date_str = self.date.strftime(f"%A den %d:{ordinal} %B").capitalize()
+        if self.date.day == 13 and self.date.isoweekday() == 5:
+            date_str = "Fredagen den 13:e " + self.date.strftime("%B")
+
+        is_red_day = self.date.isoweekday() == 7 or self.date in holidays.Sweden()
+        text_width = text_d.textlength(date_str, font=FONT)
+        draw_text_with_bg(d, text_d, date_str, self.x + self.w/2 - text_width/2, self.y + 3, FONT, fill=weekday_color if not is_red_day else red_day_color, bg_color=c_white, padding=1)
+
+        todays_events, multiday_event_days = get_todays_events(events, self.date)
+
+        line_idx = 0
+        for event, color in todays_events:
+            bp = "★" if color == "#00FF00" else "❤" if color == "#FF0000" else "*"
+
+            event_text = event.summary
+            if event in multiday_event_days.keys():
+                event_text += " " + multiday_event_days[event]
+            elif event.all_day:
+                event_text = event.summary
+            else:
+                event_text = f"{event.start.astimezone().strftime('%H:%M')} {event_text}"
+        
+            event_text = bp  + event_text
+
+            wrapped_lines = []
+
+            max_width = int(self.w)
+            while True:
+                hyphenator = Hyphenator("sv_SE")
+                wrapped_lines = textwrap2.wrap(event_text, max_lines = 4,width=max_width, break_long_words=True, use_hyphenator=hyphenator)
+                lines_good = all([text_d.textlength(line, font=LARGE_FONT) <= self.w for line in wrapped_lines])
+                if lines_good:
+                    break
+                max_width -= 1
+
+            for line in wrapped_lines:
+                line_idx += 1
+                draw_text_with_bg(d, text_d, line, self.x + 2, self.y + 3 + (LARGE_FONT.size * (line_idx)), LARGE_FONT, fill=color, bg_color=c_white, padding=0, antialias=True)
+            text_d.text((self.x + 2, self.y + 3 + (LARGE_FONT.size * (line_idx))), line, fill=color, font=LARGE_FONT)
+
+
+class DrawWeek:
+    def __init__(self, x, y, w, h):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+
+    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
+        # Draw background
+        d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], fill=f"rgba(255,255,255,{BG_OPACITY})")
+
+        # Draw day boxes, in a 4x2 grid
+        day_width = self.w / 4
+        day_height = self.h / 2
+
+        for i in range(7):
+            day_x = self.x + (i % 4) * day_width
+            day_y = self.y + (i // 4) * day_height
+            day = DrawWeekDay(
+                x=day_x,
+                y=day_y,
+                w=day_width,
+                h=day_height,
+                date=datetime.date.today() + datetime.timedelta(days=i)
+            )
+            day.draw(d, text_d, events)
 
 def setup_image():
     ImageDraw.ImageDraw.fontmode = "1"
@@ -203,7 +289,7 @@ def draw_image():
     red_day_color = c_red
 
     locale.setlocale(locale.LC_ALL, "sv_SE.UTF-8")
-    cal = DrawCalendar(CAL_X, CAL_Y, CAL_W, CAL_H)
+    
 
     events: list[tuple[icalevents.Event, str]] = []
     with open("calendars.csv", "r") as csvfile:
@@ -215,7 +301,25 @@ def draw_image():
             events.extend(es)
 
     out, d, text_image, text_d = setup_image()
-    cal.draw(d,text_d, events)
+    if os.path.exists("draw.json"):
+        with open("draw.json", "r") as f:
+            data = json.load(f)
+        option = data.get("draw_option", "month")
+    else:
+        option = ""
+
+    if option not in ["month", "week"]:
+        option = "month"
+        with open("draw.json", "w") as f:
+            json.dump({"draw_option": "month"}, f)
+
+    if option == "month":
+        cal = DrawCalendar(CAL_X, CAL_Y, CAL_W, CAL_H)
+        cal.draw(d,text_d, events)
+    elif option == "week":
+        cal = DrawWeek(20, 20, IMG_WIDTH - 40, IMG_HEIGHT - 40)
+        cal.draw(d,text_d, events)
+            
 
     palette_image = Image.new("P", (1, 1))
     palette_image.putpalette([ 0, 0, 0, 
