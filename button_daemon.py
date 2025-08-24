@@ -5,6 +5,7 @@ import gpiodevice
 from gpiod.line import Bias, Direction, Edge
 import show_on_inky
 import json
+import time
 # GPIO pins for each button (from top to bottom)
 # These will vary depending on platform and the ones
 # below should be correct for Raspberry Pi 5.
@@ -62,7 +63,17 @@ def handle_button(event):
     show_on_inky.show_on_inky()
         
 
+if __name__ == "__main__":
+    time_updated = time.time()
+    show_on_inky.show_on_inky()
 
-while True:
-    for event in request.read_edge_events():
-        handle_button(event)
+    while True:
+        events = request.read_edge_events()
+        if events:
+            for event in events:
+                handle_button(event)
+        else:
+            
+            if time.time() - time_updated > 3600:  # Update every hour
+                show_on_inky.show_on_inky()
+                time_updated = time.time()

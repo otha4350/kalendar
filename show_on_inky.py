@@ -17,12 +17,15 @@ chip = gpiodevice.find_chip_by_platform()
 led = chip.line_offset_from_id(LED_PIN)
 gpio = chip.request_lines(consumer="inky", config={led: gpiod.LineSettings(direction=Direction.OUTPUT, bias=Bias.DISABLED)})
 
-def show_on_inky():
+def show_on_inky(prev_image=None):
     gpio.set_value(led, Value.ACTIVE)
 
     inky = auto(ask_user=True, verbose=True)
 
     out = draw_cal.draw_image()
+    if prev_image and out == prev_image:
+        gpio.set_value(led, Value.INACTIVE)
+        return
     inky.set_image(out)
     inky.show()
     gpio.set_value(led, Value.INACTIVE)

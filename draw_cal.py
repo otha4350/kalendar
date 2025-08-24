@@ -282,7 +282,7 @@ def setup_image():
     # wallpapers = [f for f in os.listdir("wallpapers") if f.endswith((".jpg", ".png"))]
     # random_wallpaper = random.choice(wallpapers)
     # out = Image.open(os.path.join("wallpapers", random_wallpaper)).convert("RGB")
-    out = Image.open("20240831_082054241_iOS.jpg").convert("RGB")
+    out = Image.open("20250214_082939112_iOS.jpg").convert("RGB")
 
     out = out.resize((IMG_WIDTH, IMG_HEIGHT))
 
@@ -311,7 +311,8 @@ def draw_image():
         reader = csv.reader(csvfile)
         reader.__next__()
         for row in reader:
-            es = icalevents.events(row[3], start=datetime.date.today() - datetime.timedelta(weeks=52), end=datetime.date.today() + datetime.timedelta(weeks=52))
+            fix_apple = row[3].startswith("webcal://")
+            es = icalevents.events(row[3], start=datetime.date.today() - datetime.timedelta(weeks=52), end=datetime.date.today() + datetime.timedelta(weeks=52), fix_apple=fix_apple)
             es = [(e, row[2]) for e in es]
             events.extend(es)
 
