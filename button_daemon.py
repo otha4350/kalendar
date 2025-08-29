@@ -2,7 +2,7 @@
 
 import gpiod
 import gpiodevice
-from gpiod.line import Bias, Direction, Edge
+from gpiod.line import Bias, Direction, Edge, Value
 import subprocess
 import json
 # GPIO pins for each button (from top to bottom)
@@ -43,6 +43,16 @@ line_config = dict.fromkeys(OFFSETS, INPUT)
 # Request the lines, *whew*
 request = chip.request_lines(consumer="spectra6-buttons", config=line_config)
 
+LED_PIN = 13
+
+# Find the gpiochip device we need to blink the led, we'll use
+# gpiodevice for this, since it knows the right device
+# for its supported platforms.
+
+# Setup for the LED pin
+led = chip.line_offset_from_id(LED_PIN)
+gpio = chip.request_lines(consumer="inky", config={led: gpiod.LineSettings(direction=Direction.OUTPUT, bias=Bias.DISABLED)})
+
 
 # "handle_button" will be called every time a button is pressed
 # It receives one argument: the associated gpiod event object.
@@ -52,6 +62,7 @@ def handle_button(event):
     label = LABELS[index]
 
     print(f"Button press detected on GPIO #{gpio_number} label: {label}")
+    gpio.set_value(led, Value.ACTIVE)
     if label == "A":
         with open("draw.json", "w") as f:
             json.dump({"draw_option": "month"}, f)
@@ -61,6 +72,8 @@ def handle_button(event):
 
     print(label)
     subprocess.run(["bash", "start.sh"])
+    gpio.set_value(led, Value.INACTIVE)
+
 
 if __name__ == "__main__":
     subprocess.run(["bash", "start.sh"])
