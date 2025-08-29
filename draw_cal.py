@@ -286,9 +286,9 @@ class DrawWeek:
 def setup_image():
     ImageDraw.ImageDraw.fontmode = "1"
     # get a random image in the wallpapers folder
-    wallpapers = [f for f in os.listdir("Otto o matilda foton") if f.endswith((".jpg", ".png"))]
+    wallpapers = [f for f in os.listdir("photos") if f.endswith((".jpg", ".png"))]
     random_wallpaper = random.choice(wallpapers)
-    out = Image.open(os.path.join("Otto o matilda foton", random_wallpaper)).convert("RGB")
+    out = Image.open(os.path.join("photos", random_wallpaper)).convert("RGB")
     # out = Image.open("20250214_082939112_iOS.jpg").convert("RGB")
 
     out = out.resize((IMG_WIDTH, IMG_HEIGHT))
