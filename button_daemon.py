@@ -60,10 +60,10 @@ def handle_button(event):
             json.dump({"draw_option": "week"}, f)
 
     print(label)
-    subprocess.run("start.sh")
+    subprocess.run("./start.sh")
 
 if __name__ == "__main__":
-    subprocess.run("start.sh")
+    subprocess.run("./start.sh")
 
     while True:
         events = request.read_edge_events()
