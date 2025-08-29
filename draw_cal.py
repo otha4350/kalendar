@@ -235,13 +235,20 @@ class DrawWeekDay:
             wrapped_lines = []
 
             max_width = int(self.w)
-            while True:
-                hyphenator = Hyphenator("sv_SE")
-                wrapped_lines = textwrap2.wrap(event_text, max_lines = 4,width=max_width, break_long_words=True, use_hyphenator=hyphenator)
+            min_width = 1
+            hyphenator = Hyphenator("sv_SE")
+            best_lines = []
+            # Binary search for the largest width that fits
+            while min_width <= max_width:
+                mid_width = (min_width + max_width) // 2
+                wrapped_lines = textwrap2.wrap(event_text, max_lines=4, width=mid_width, break_long_words=True, use_hyphenator=hyphenator)
                 lines_good = all([text_d.textlength(line, font=LARGE_FONT) <= self.w for line in wrapped_lines])
                 if lines_good:
-                    break
-                max_width -= 1
+                    best_lines = wrapped_lines
+                    min_width = mid_width + 1
+                else:
+                    max_width = mid_width - 1
+            wrapped_lines = best_lines if best_lines else [event_text]
 
             for line in wrapped_lines:
                 line_idx += 1
