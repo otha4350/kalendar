@@ -9,6 +9,7 @@ import random
 import os
 from hyphen import Hyphenator, textwrap2
 import json
+from weather import CalWeather
 
 # Constants for calendar layout
 IMG_WIDTH = 800
@@ -271,7 +272,7 @@ class DrawWeek:
         day_width = self.w / 4
         day_height = self.h / 2
 
-        for i in range(7):
+        for i in range(1,8):
             day_x = self.x + (i % 4) * day_width
             day_y = self.y + (i // 4) * day_height
             day = DrawWeekDay(
@@ -282,6 +283,11 @@ class DrawWeek:
                 date=datetime.date.today() + datetime.timedelta(days=i)
             )
             day.draw(d, text_d, events)
+        
+        #draw weather
+        w = CalWeather()
+        weather_img = w.get_image(int(day_width), int(day_height))
+        d._image.paste(weather_img, (int(self.x), int(self.y)), weather_img)
 
 def setup_image():
     ImageDraw.ImageDraw.fontmode = "1"
