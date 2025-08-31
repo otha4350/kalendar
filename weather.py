@@ -80,23 +80,64 @@ class CalWeather:
             fill="#FFFFFF",
             anchor="rb"
         )
-        print(self.forecast.current.summary)
 
         font = ImageFont.truetype("font/noto-sans/NotoSans-Regular.ttf", 40)
         while draw.textlength(self.forecast.current.summary, font=font) > w - 10 and font.size > 10:
             font = font.font_variant(size=font.size - 1)
         draw.text(
-            (5, h-40),
+            (5, h-50),
             f"{self.forecast.current.summary}",
             font=font,
             fill="#FFFFFF",
             anchor="lb"
         )
+        draw.rectangle((0, h-50, w, h), fill=(255,255,255,255))
+
+        for i in range(4):
+            hour_idx = (i+1) * 3
+            mini_img = self.get_mini_image(int(w/4), 50, hour_idx)
+            img.paste(mini_img, (i * int(w/4), h - 50), mini_img)
+
+        return img
+    
+    def get_mini_image(self, w, h, hour_idx):
+        fc = self.forecast.hourly[hour_idx]
+        img = Image.new("RGBA", (w, h), (255, 255, 255, 0))
+        text_img = Image.new("P", (w, h), "#111111")
+        text_draw = ImageDraw.Draw(text_img)
+        draw = ImageDraw.Draw(img)
+        
+
+        icon_img = Image.open(
+            f"weather-icons/color/Weather Icon-{weather_dict[fc.icon]}.png"
+        ).convert("RGBA").resize((int(w*0.75),int(w*0.75)))
+        img.paste(icon_img, (int(w*0.125), 5), icon_img)
+        
+
+        text_draw.text(
+            (int(w/2),5),
+            f"{fc.date.strftime('%H')}",
+            font=ImageFont.truetype("font/noto-sans/NotoSans_Condensed-Bold.ttf", 10),
+            fill="#000000",
+            anchor="mt"
+        )
+
+        text_draw.text(
+            (int(w/2),h-10),
+            f"{round(fc.temperature)}°",
+            font=ImageFont.truetype("font/noto-sans/NotoSans_Condensed-Bold.ttf", 10),
+            fill="#000000",
+            anchor="mt"
+        )
+
+        img = Image.composite(img, text_img.convert("RGBA"), text_img.convert("L").point(lambda x: 255 if x == 17 else 0))
         return img
 
 
 if __name__ == "__main__":
 
     w = CalWeather()
+
+    # w.get_mini_image(int(190/4), 60, 3)
     img = w.get_image(190, 220)
     img.show()
