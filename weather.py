@@ -92,7 +92,6 @@ class CalWeather:
             fill="#FFFFFF",
             anchor="lb"
         )
-        img.show()
         return img
 
 
