@@ -4,6 +4,7 @@ from pymeteosource.api import Meteosource
 from pymeteosource.types import tiers
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from translate import Translator
+import random
 
 # Change this to your actual API key
 with open("api_key.txt", "r") as f:
@@ -25,7 +26,7 @@ weather_dict = {
     9: 56,  # Fog
     10: 21,  # Light rain
     11: 22,  # Rain
-    12: 20,  # Possible rain
+    12: 16,  # Possible rain
     13: 11,  # Rain shower
     14: 14,  # Thunderstorm
     15: 15,  # Local thunderstorms
@@ -86,7 +87,7 @@ class CalWeather:
         translator = Translator(to_lang="sv")
         summary_sv = translator.translate(summary)
 
-        font = ImageFont.truetype("font/noto-sans/NotoSans-Regular.ttf", 40)
+        font = ImageFont.truetype("font/noto-sans/NotoSans_Condensed-Bold.ttf", 40)
         while draw.textlength(summary_sv, font=font) > w - 10 and font.size > 10:
             font = font.font_variant(size=font.size - 1)
         draw.text(
@@ -111,13 +112,26 @@ class CalWeather:
         text_draw = ImageDraw.Draw(text_img)
         draw = ImageDraw.Draw(img)
         
-        draw.ellipse([3,3,w-3,h-3], fill="white")
+        icon_scale = 0.75
+        icon_w, icon_h = int(w*icon_scale),int(w*icon_scale)
+        icon_x, icon_y = int(w*((1-icon_scale)/2)), 5
+
+        draw.ellipse([icon_x, icon_y, icon_x+icon_w,icon_y+icon_h], fill="white")
+
+        bubble_size = 20
+        rand_x = random.randrange(round(w/2-bubble_size/3), round(w/2+bubble_size/3)) - round(bubble_size/2)
+        draw.ellipse([rand_x, 0, rand_x+bubble_size, bubble_size], fill="white")
+        
+        rand_x = random.randrange(round(w/2-bubble_size/3), round(w/2+bubble_size/3)) - round(bubble_size/2)
+        draw.ellipse([rand_x, h-bubble_size, rand_x+bubble_size, h], fill="white")
 
         icon_img = Image.open(
             f"weather-icons/color/Weather Icon-{weather_dict[fc.icon]}.png"
-        ).convert("RGBA").resize((int(w*0.75),int(w*0.75)))
-        img.paste(icon_img, (int(w*0.125), 5), icon_img)
+        ).convert("RGBA").resize((icon_w, icon_h))
+        img.paste(icon_img, (icon_x, icon_y), icon_img)
         
+        
+
 
         text_draw.text(
             (int(w/2),5),
@@ -136,6 +150,37 @@ class CalWeather:
         )
         img = Image.composite(img, text_img.convert("RGBA"), text_img.convert("L").point(lambda x: 255 if x == 17 else 0))
         return img
+    
+    def get_micro_image(self, w, h, date, color="fill-black"):
+        fc = None
+        for pfc in self.forecast.daily:
+            fmt = lambda dt: datetime.strftime(dt, "%Y-%m-%d")
+            if fmt(pfc.day)==fmt(date):
+                fc = pfc
+                break
+        
+        if fc is None:
+            return Image.new("RGBA", (w, h), (255, 255, 255, 0))
+
+        img = Image.new("RGBA", (w, h), (255, 255, 255, 0))
+
+        draw = ImageDraw.Draw(img)
+        
+        draw.ellipse([0,0,w-1,h-1], fill="white")
+
+        icon_img = Image.open(
+            f"weather-icons/{color}/Weather Icon-{weather_dict[fc.icon]}.png"
+        ).convert("RGBA").resize((w-2,h-2))
+
+        if color == "color":
+            icon_img = ImageEnhance.Brightness(icon_img).enhance(0.8)
+
+        img.paste(icon_img, (1,1), icon_img)
+
+        if color == "fill-black":
+            img = ImageEnhance.Contrast(img).enhance(2)
+
+        return img
 
 
 if __name__ == "__main__":
@@ -143,5 +188,6 @@ if __name__ == "__main__":
     w = CalWeather()
 
     # w.get_mini_image(int(190/4), 60, 3)
-    img = w.get_image(190, 220)
+    img = w.get_micro_image(16,16, datetime.now())
+
     img.show()

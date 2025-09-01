@@ -90,7 +90,7 @@ class DrawCalendarDay:
         self.h = h
         self.date = date 
 
-    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events: list[tuple[icalevents.Event, str]]):
+    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events: list[tuple[icalevents.Event, str]], weather: CalWeather):
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.w, self.y + self.h
         d.rectangle([x1, y1, x2, y2], outline=lines_color, width=1)
@@ -106,7 +106,7 @@ class DrawCalendarDay:
         if self.date.isoweekday() == 1:
             week_str = "v. " + str(self.date.isocalendar().week)
             draw_text_with_bg(d, text_d, week_str, x2 - text_d.textlength(week_str, font=FONT)-5, y1 + 3, FONT, fill=weeknum_color, bg_color=c_white, padding=1)
-
+            
         # Draw events
         
         todays_events, multiday_event_days = get_todays_events(events, self.date)
@@ -153,6 +153,10 @@ class DrawCalendarDay:
         if  events_today > MAX_EVENTS:
             draw_text_with_bg(d, text_d, f"+{events_today - MAX_EVENTS} till härligheter…", x1 + 2, y2 - 10-2, FONT.font_variant(size=10), fill=lines_color, bg_color=c_white, padding=0)
         
+        if not self.date.isoweekday() == 1:
+            weather_img = weather.get_micro_image(18,18, self.date)
+            d._image.paste(weather_img, (int(x2 - (18+3)), int(y1+(3))), weather_img)
+
 class DrawCalendar:
     def __init__(self, x, y, w, h):
         self.x = x
@@ -160,6 +164,7 @@ class DrawCalendar:
         self.w = w
         self.h = h
         self.locale_cal = calendar.LocaleTextCalendar(calendar.MONDAY, "sv-se")
+        self.weather = CalWeather()
 
         monthdates = self.locale_cal.monthdatescalendar(datetime.date.today().year, datetime.date.today().month)
 
@@ -187,7 +192,7 @@ class DrawCalendar:
 
         for week in self.days_grid:
             for day in week:
-                day.draw(d,text_d, events)
+                day.draw(d,text_d, events, self.weather)
         for week_row in self.days_grid:
             for day in week_row:
                 if day.date == datetime.date.today():
@@ -206,16 +211,14 @@ class DrawWeekDay:
         self.h = h
         self.date = date
 
-    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
+    def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events, weather: CalWeather):
         d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], outline=lines_color, width=1)
-        ordinal = "a" if self.date.day <= 2 else "e"
-        date_str = self.date.strftime(f"%A den %d:{ordinal} %B").capitalize()
+        date_str = self.date.strftime(f"%A {self.date.strftime("%d").lstrip("0")} %B").capitalize()
         if self.date.day == 13 and self.date.isoweekday() == 5:
             date_str = "Fredagen den 13:e " + self.date.strftime("%B")
 
         is_red_day = self.date.isoweekday() == 7 or self.date in holidays.Sweden()
-        text_width = text_d.textlength(date_str, font=FONT)
-        draw_text_with_bg(d, text_d, date_str, self.x + self.w/2 - text_width/2, self.y + 3, FONT, fill=weekday_color if not is_red_day else red_day_color, bg_color=c_white, padding=1)
+        draw_text_with_bg(d, text_d, date_str, self.x + 3, self.y + 3, FONT, fill=weekday_color if not is_red_day else red_day_color, bg_color=c_white, padding=1)
 
         todays_events, multiday_event_days = get_todays_events(events, self.date)
 
@@ -256,6 +259,8 @@ class DrawWeekDay:
                 draw_text_with_bg(d, text_d, line, self.x + 2, self.y + 3 + (LARGE_FONT.size * (line_idx)), LARGE_FONT, fill=color, bg_color=c_white, padding=0, antialias=True)
             text_d.text((self.x + 2, self.y + 3 + (LARGE_FONT.size * (line_idx))), line, fill=color, font=LARGE_FONT)
 
+        weather_img = weather.get_micro_image(26,26, self.date, color="color")
+        d._image.paste(weather_img, (int(self.x+self.w - (26+3)), int(self.y-(2))), weather_img)
 
 class DrawWeek:
     def __init__(self, x, y, w, h):
@@ -263,6 +268,7 @@ class DrawWeek:
         self.y = y
         self.w = w
         self.h = h
+        self.weather = CalWeather()
 
     def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events):
         # Draw background
@@ -282,11 +288,10 @@ class DrawWeek:
                 h=day_height,
                 date=datetime.date.today() + datetime.timedelta(days=i-1)
             )
-            day.draw(d, text_d, events)
+            day.draw(d, text_d, events, self.weather)
         
         #draw weather
-        w = CalWeather()
-        weather_img = w.get_image(int(day_width), int(day_height))
+        weather_img = self.weather.get_image(int(day_width), int(day_height))
         d._image.paste(weather_img, (int(self.x), int(self.y)), weather_img)
         d.rectangle([self.x, self.y, self.x+day_width, self.y+day_height], outline=lines_color)
 

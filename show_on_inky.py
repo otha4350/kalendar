@@ -1,5 +1,5 @@
 
-from inky.auto import auto
+from inky.auto import auto # pyright: ignore[reportMissingImports]
 import draw_cal
 
 
