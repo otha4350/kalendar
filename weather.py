@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pymeteosource.api import Meteosource
 from pymeteosource.types import tiers
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+from translate import Translator
 
 # Change this to your actual API key
 with open("api_key.txt", "r") as f:
@@ -81,17 +82,20 @@ class CalWeather:
             anchor="rb"
         )
 
+        summary = self.forecast.current.summary
+        translator = Translator(to_lang="sv")
+        summary_sv = translator.translate(summary)
+
         font = ImageFont.truetype("font/noto-sans/NotoSans-Regular.ttf", 40)
-        while draw.textlength(self.forecast.current.summary, font=font) > w - 10 and font.size > 10:
+        while draw.textlength(summary_sv, font=font) > w - 10 and font.size > 10:
             font = font.font_variant(size=font.size - 1)
         draw.text(
             (5, h-50),
-            f"{self.forecast.current.summary}",
+            summary_sv,
             font=font,
             fill="#FFFFFF",
             anchor="lb"
         )
-        draw.rectangle((0, h-50, w, h), fill=(255,255,255,255))
 
         for i in range(4):
             hour_idx = (i+1) * 3
@@ -107,6 +111,7 @@ class CalWeather:
         text_draw = ImageDraw.Draw(text_img)
         draw = ImageDraw.Draw(img)
         
+        draw.ellipse([3,3,w-3,h-3], fill="white")
 
         icon_img = Image.open(
             f"weather-icons/color/Weather Icon-{weather_dict[fc.icon]}.png"
@@ -129,7 +134,6 @@ class CalWeather:
             fill="#000000",
             anchor="mt"
         )
-
         img = Image.composite(img, text_img.convert("RGBA"), text_img.convert("L").point(lambda x: 255 if x == 17 else 0))
         return img
 

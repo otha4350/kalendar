@@ -147,7 +147,7 @@ class DrawCalendarDay:
             length = text_d.textlength(event_text, font=FONT)
             bbox = (x1 + 2, y1 +3+ (12 * (line_idx)), min(x1 + 2 + length + bp_w, x2-1), y1 + (12 * (line_idx+1)) +4)
             d.rounded_rectangle(bbox,radius=3, fill=c_white)
-            text_d.text((x1+2, y1 +3+ (12 * (line_idx)) - 2), bp, font=SYMBOL_FONT, fill=color)
+            text_d.text((x1+2, y1 +4+ (12 * (line_idx)) - 2), bp, font=SYMBOL_FONT, fill=color)
             text_d.text((x1 + 2+bp_w, y1 +3+ (12 * (line_idx))), event_text, fill=c_black, font=FONT)
 
         if  events_today > MAX_EVENTS:
@@ -280,7 +280,7 @@ class DrawWeek:
                 y=day_y,
                 w=day_width,
                 h=day_height,
-                date=datetime.date.today() + datetime.timedelta(days=i)
+                date=datetime.date.today() + datetime.timedelta(days=i-1)
             )
             day.draw(d, text_d, events)
         
@@ -288,14 +288,15 @@ class DrawWeek:
         w = CalWeather()
         weather_img = w.get_image(int(day_width), int(day_height))
         d._image.paste(weather_img, (int(self.x), int(self.y)), weather_img)
+        d.rectangle([self.x, self.y, self.x+day_width, self.y+day_height], outline=lines_color)
 
-def setup_image():
+def setup_image(option):
     ImageDraw.ImageDraw.fontmode = "1"
     # get a random image in the wallpapers folder
-    wallpapers = [f for f in os.listdir("photos") if f.endswith((".jpg", ".png"))]
+    image_folder = "photos" if option == "week" else "wallpapers"
+    wallpapers = [f for f in os.listdir(image_folder) if f.endswith((".jpg", ".png"))]
     random_wallpaper = random.choice(wallpapers)
-    out = Image.open(os.path.join("photos", random_wallpaper)).convert("RGB")
-    # out = Image.open("20250214_082939112_iOS.jpg").convert("RGB")
+    out = Image.open(os.path.join(image_folder, random_wallpaper)).convert("RGB")
 
     out = out.resize((IMG_WIDTH, IMG_HEIGHT))
 
@@ -312,7 +313,7 @@ def draw_image():
     weeknum_color = c_red
     month_color = c_white
     month_outline_color = c_black
-    lines_color = c_black
+    lines_color = c_white
     today_box_color = c_red
     red_day_color = c_red
 
@@ -329,7 +330,6 @@ def draw_image():
             es = [(e, row[2]) for e in es]
             events.extend(es)
 
-    out, d, text_image, text_d = setup_image()
     if os.path.exists("draw.json"):
         with open("draw.json", "r") as f:
             data = json.load(f)
@@ -342,6 +342,7 @@ def draw_image():
         with open("draw.json", "w") as f:
             json.dump({"draw_option": "month"}, f)
 
+    out, d, text_image, text_d = setup_image(option)
     if option == "month":
         cal = DrawCalendar(CAL_X, CAL_Y, CAL_W, CAL_H)
         cal.draw(d,text_d, events)
