@@ -7,7 +7,11 @@ def show_on_inky(prev_image=None):
 
     inky = auto(ask_user=True, verbose=True)
 
-    out = draw_cal.draw_image()
+    try:
+        out = draw_cal.draw_image()
+    except Exception as e:
+        out = draw_cal.draw_error(str(e))
+    
     if prev_image and out == prev_image:
         return
     inky.set_image(out)

@@ -297,7 +297,7 @@ class DrawWeek:
 
 def setup_image(option):
     ImageDraw.ImageDraw.fontmode = "1"
-    # get a random image in the wallpapers folder
+    
     image_folder = "photos" if option == "week" else "wallpapers"
     wallpapers = [f for f in os.listdir(image_folder) if f.endswith((".jpg", ".png"))]
     random_wallpaper = random.choice(wallpapers)
@@ -365,6 +365,15 @@ def draw_image():
     out.putpalette(SAT_PALETTE)
 
     return out
+
+def draw_error(error_text):
+    out = Image.new("RGB", (IMG_WIDTH, IMG_HEIGHT), "#FFFFFF")
+    draw = ImageDraw.Draw(out)
+
+    draw.text((10,10), error_text, "red")
+    
+    return out
+
 
 if __name__ == "__main__":
     global colors
