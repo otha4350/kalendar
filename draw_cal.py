@@ -213,7 +213,7 @@ class DrawWeekDay:
 
     def draw(self, d: ImageDraw.ImageDraw, text_d: ImageDraw.ImageDraw, events, weather: CalWeather):
         d.rectangle([self.x, self.y, self.x + self.w, self.y + self.h], outline=lines_color, width=1)
-        date_str = self.date.strftime(f"%A {self.date.strftime("%d").lstrip("0")} %B").capitalize()
+        date_str = self.date.strftime(f"%A {self.date.strftime('%d').lstrip('0')} %B").capitalize()
         if self.date.day == 13 and self.date.isoweekday() == 5:
             date_str = "Fredagen den 13:e " + self.date.strftime("%B")
 
@@ -371,7 +371,7 @@ def draw_error(error_text):
     draw = ImageDraw.Draw(out)
 
     draw.text((10,10), error_text, "red")
-    
+
     return out
 
 
