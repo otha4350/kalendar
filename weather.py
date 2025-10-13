@@ -5,14 +5,14 @@ from pymeteosource.types import tiers
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from translate import Translator
 import random
+import json
+import os
 
 # Change this to your actual API key
 with open("api_key.txt", "r") as f:
     YOUR_API_KEY = f.read().strip()
 # Change this to your actual tier
 YOUR_TIER = tiers.FREE
-
-# Initialize the main Meteosource object
 
 weather_dict = {
     1: 63,  # Not available
@@ -53,6 +53,28 @@ weather_dict = {
     36: 33,  # Possible rain and snow (night)
 }
 
+def translate(to_trans):
+    trans = ""
+    found_trans = False
+    data = {}
+    if os.path.exists("trans.json"):
+        with open("trans.json", "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = {}
+            if to_trans in data.keys():
+                trans = data[to_trans]
+                found_trans = True
+
+    if not found_trans:   
+        transer = Translator(to_lang="sv")
+        trans = transer.translate(to_trans)
+        data[to_trans] = trans
+        with open("trans.json", "w") as f:
+            json.dump(data, f)
+    
+    return trans
 
 class CalWeather:
     def __init__(self):
@@ -84,8 +106,7 @@ class CalWeather:
         )
 
         summary = self.forecast.current.summary
-        translator = Translator(to_lang="sv")
-        summary_sv = translator.translate(summary)
+        summary_sv = translate(summary)
 
         font = ImageFont.truetype("font/noto-sans/NotoSans_Condensed-Bold.ttf", 40)
         while draw.textlength(summary_sv, font=font) > w - 10 and font.size > 10:
@@ -129,9 +150,6 @@ class CalWeather:
             f"weather-icons/color/Weather Icon-{weather_dict[fc.icon]}.png"
         ).convert("RGBA").resize((icon_w, icon_h))
         img.paste(icon_img, (icon_x, icon_y), icon_img)
-        
-        
-
 
         text_draw.text(
             (int(w/2),5),
