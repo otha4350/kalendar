@@ -140,11 +140,10 @@ class CalWeather:
         draw.ellipse([icon_x, icon_y, icon_x+icon_w,icon_y+icon_h], fill="white")
 
         bubble_size = 20
-        rand_x = random.randrange(round(w/2-bubble_size/3), round(w/2+bubble_size/3)) - round(bubble_size/2)
-        draw.ellipse([rand_x, 0, rand_x+bubble_size, bubble_size], fill="white")
+        bubble_x = w/2 - bubble_size/2
+        draw.ellipse([bubble_x, 0, bubble_x+bubble_size, bubble_size], fill="white")
         
-        rand_x = random.randrange(round(w/2-bubble_size/3), round(w/2+bubble_size/3)) - round(bubble_size/2)
-        draw.ellipse([rand_x, h-bubble_size, rand_x+bubble_size, h], fill="white")
+        draw.ellipse([bubble_x, h-bubble_size, bubble_x+bubble_size, h], fill="white")
 
         icon_img = Image.open(
             f"weather-icons/color/Weather Icon-{weather_dict[fc.icon]}.png"

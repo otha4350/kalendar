@@ -362,6 +362,9 @@ def draw_image():
     elif option == "week":
         cal = DrawWeek(20, 20, IMG_WIDTH - 40, IMG_HEIGHT - 40)
         cal.draw(d,text_d, events)
+
+    # draw current time
+    draw_text_with_bg(d, text_d, datetime.datetime.now().strftime("%H:%M"),0,0,FONT)
             
 
     palette_image = Image.new("P", (1, 1))
