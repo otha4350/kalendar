@@ -1,0 +1,9 @@
+Pillow>=9.0.0
+icalevents>=0.0.0
+holidays>=0.35
+pyphen>=0.14.0
+pymeteosource>=1.4.0
+translate>=3.6.1
+inky>=1.4.0
+gpiod>=1.2.0
+gpiodevice>=0.0.6
